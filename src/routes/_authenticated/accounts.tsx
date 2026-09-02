@@ -21,6 +21,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   ACCOUNT_COLORS,
+  ADVANCED_ACCOUNT_PRESETS,
   fetchAccounts,
   totalPercentage,
   type Account,
@@ -123,7 +124,33 @@ function AccountsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const addPreset = useMutation({
+    mutationFn: async (name: string) => {
+      const preset = ADVANCED_ACCOUNT_PRESETS.find((p) => p.name === name);
+      if (!preset) throw new Error("Unknown preset");
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("No active session");
+      const { error } = await supabase.from("accounts").insert({
+        user_id: userId,
+        name: preset.name,
+        description: preset.description,
+        percentage: preset.percentage,
+        color: preset.color,
+        kind: "allocation",
+        sort_order: accounts.length,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Account added");
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const remove = useMutation({
+
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("accounts").delete().eq("id", id);
       if (error) throw error;
@@ -181,6 +208,33 @@ function AccountsPage() {
             New account
           </Button>
         </div>
+
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-sm font-medium">Advanced Profit First accounts</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Add specialised sub-accounts recommended for product, project and cash-buffer heavy
+            businesses.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ADVANCED_ACCOUNT_PRESETS.map((preset) => {
+              const exists = accounts.some((a) => a.name === preset.name);
+              return (
+                <Button
+                  key={preset.name}
+                  size="sm"
+                  variant="outline"
+                  disabled={exists || addPreset.isPending}
+                  onClick={() => addPreset.mutate(preset.name)}
+                >
+                  <Plus className="size-3.5" />
+                  {preset.name}
+                  {exists ? " (added)" : ""}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
 
         {accountsQuery.isLoading ? (
           <div className="flex h-48 items-center justify-center text-muted-foreground">
