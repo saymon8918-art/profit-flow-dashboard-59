@@ -279,6 +279,7 @@ function CashflowPage() {
     onSuccess: () => {
       toast.success("Removed");
       queryClient.invalidateQueries({ queryKey: ["scheduled_payments"] });
+      queryClient.invalidateQueries({ queryKey: ["payment_records"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
