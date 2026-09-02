@@ -39,7 +39,23 @@ export type CalendarEvent = {
   kind: "scheduled" | "invoice";
   category: string;
   accountId?: string | null;
+  scheduledPaymentId?: string | null;
+  invoiceId?: string | null;
 };
+
+export type PaymentRecord = {
+  id: string;
+  event_key: string;
+  scheduled_payment_id: string | null;
+  invoice_id: string | null;
+  account_id: string | null;
+  name: string;
+  category: string;
+  direction: string;
+  amount: number;
+  occurred_on: string;
+};
+
 
 
 export function toKey(d: Date) {
