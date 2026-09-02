@@ -182,6 +182,33 @@ function AccountsPage() {
           </Button>
         </div>
 
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-sm font-medium">Advanced Profit First accounts</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Add specialised sub-accounts recommended for product, project and cash-buffer heavy
+            businesses.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ADVANCED_ACCOUNT_PRESETS.map((preset) => {
+              const exists = accounts.some((a) => a.name === preset.name);
+              return (
+                <Button
+                  key={preset.name}
+                  size="sm"
+                  variant="outline"
+                  disabled={exists || addPreset.isPending}
+                  onClick={() => addPreset.mutate(preset.name)}
+                >
+                  <Plus className="size-3.5" />
+                  {preset.name}
+                  {exists ? " (added)" : ""}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+
         {accountsQuery.isLoading ? (
           <div className="flex h-48 items-center justify-center text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
