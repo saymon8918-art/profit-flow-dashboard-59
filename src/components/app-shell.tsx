@@ -1,17 +1,47 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, Wallet, History, LogOut, PiggyBank, Menu } from "lucide-react";
+import {
+  LayoutDashboard,
+  Wallet,
+  History,
+  LogOut,
+  PiggyBank,
+  Menu,
+  BarChart3,
+  ArrowRightLeft,
+  FileText,
+  Target,
+  Plug,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/accounts", label: "Accounts", icon: Wallet },
-  { to: "/history", label: "History", icon: History },
+const NAV_GROUPS = [
+  {
+    label: "Money management",
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/analytics", label: "Analytics & Reports", icon: BarChart3 },
+      { to: "/transfers", label: "Transfers & Payouts", icon: ArrowRightLeft },
+      { to: "/invoices", label: "Invoices & Inflow", icon: FileText },
+      { to: "/history", label: "History", icon: History },
+    ],
+  },
+  {
+    label: "Setup & automation",
+    items: [
+      { to: "/accounts", label: "Accounts", icon: Wallet },
+      { to: "/targets", label: "Target percentages", icon: Target },
+      { to: "/integrations", label: "Integrations", icon: Plug },
+      { to: "/team", label: "Users & Access", icon: Users },
+    ],
+  },
 ] as const;
+
 
 export function AppShell({
   title,
