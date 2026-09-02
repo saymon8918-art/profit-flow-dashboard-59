@@ -520,17 +520,27 @@ function CashflowPage() {
             </div>
 
             <div className="mt-5 grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border text-sm">
-              {WEEKDAYS.map((d) => (
-                <div key={d} className="bg-surface px-2 py-2.5 text-center text-sm font-semibold text-muted-foreground">
-                  {d}
-                </div>
-              ))}
+              {WEEKDAYS.map((d, i) => {
+                const isWeekend = i >= 5;
+                return (
+                  <div
+                    key={d}
+                    className={cn(
+                      "px-2 py-2.5 text-center text-sm font-semibold",
+                      isWeekend ? "bg-primary/15 text-primary" : "bg-surface text-muted-foreground",
+                    )}
+                  >
+                    {d}
+                  </div>
+                );
+              })}
               {cells.map((day) => {
                 const key = toKey(day);
                 const dayEvents = byDay.get(key) ?? [];
                 const outside = view === "month" && day.getMonth() !== month.getMonth();
                 const projected = projectionByDate.get(key);
                 const gap = (projected?.deficits.length ?? 0) > 0;
+                const isWeekendDay = day.getDay() === 0 || day.getDay() === 6;
                 const totals = dayEvents.reduce(
                   (acc, e) => {
                     if (paidKeys.has(e.id)) return acc;
@@ -555,7 +565,12 @@ function CashflowPage() {
                     )}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-semibold">
+                      <span
+                        className={cn(
+                          "text-base font-semibold",
+                          isWeekendDay && !outside && "text-primary",
+                        )}
+                      >
                         {view === "week"
                           ? day.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })
                           : day.getDate()}
