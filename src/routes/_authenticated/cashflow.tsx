@@ -528,7 +528,7 @@ function CashflowPage() {
               {cells.map((day) => {
                 const key = toKey(day);
                 const dayEvents = byDay.get(key) ?? [];
-                const outside = day.getMonth() !== month.getMonth();
+                const outside = view === "month" && day.getMonth() !== month.getMonth();
                 const projected = projectionByDate.get(key);
                 const gap = (projected?.deficits.length ?? 0) > 0;
                 return (
