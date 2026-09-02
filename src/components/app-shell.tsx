@@ -28,6 +28,7 @@ const NAV_GROUPS = [
       { to: "/analytics", label: "Analytics & Reports", icon: BarChart3 },
       { to: "/transfers", label: "Transfers & Payouts", icon: ArrowRightLeft },
       { to: "/invoices", label: "Invoices & Inflow", icon: FileText },
+      { to: "/cashflow", label: "Cashflow Calendar", icon: CalendarDays },
       { to: "/history", label: "History", icon: History },
     ],
   },
