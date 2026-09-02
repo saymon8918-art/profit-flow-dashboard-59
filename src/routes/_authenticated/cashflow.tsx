@@ -531,6 +531,15 @@ function CashflowPage() {
                 const outside = view === "month" && day.getMonth() !== month.getMonth();
                 const projected = projectionByDate.get(key);
                 const gap = (projected?.deficits.length ?? 0) > 0;
+                const totals = dayEvents.reduce(
+                  (acc, e) => {
+                    if (paidKeys.has(e.id)) return acc;
+                    if (e.direction === "in") acc.in += e.amount;
+                    else acc.out += e.amount;
+                    return acc;
+                  },
+                  { in: 0, out: 0 },
+                );
                 return (
                   <button
                     type="button"
@@ -538,6 +547,7 @@ function CashflowPage() {
                     onClick={() => setSelectedDate(key)}
                     className={cn(
                       "min-h-24 bg-card p-2 text-left align-top transition-colors hover:bg-surface",
+                      view === "week" && "min-h-36",
                       outside && "bg-card/50 text-muted-foreground",
                       gap && "bg-destructive/10",
                       key === todayKey && "ring-1 ring-primary ring-inset",
@@ -545,7 +555,11 @@ function CashflowPage() {
                     )}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-medium">{day.getDate()}</span>
+                      <span className="text-[11px] font-medium">
+                        {view === "week"
+                          ? day.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })
+                          : day.getDate()}
+                      </span>
                       {gap ? (
                         <AlertTriangle
                           className="size-3 text-destructive"
@@ -553,8 +567,18 @@ function CashflowPage() {
                         />
                       ) : null}
                     </div>
+                    {totals.in > 0 || totals.out > 0 ? (
+                      <div className="mt-1 flex flex-wrap gap-x-2 text-[10px] font-semibold">
+                        {totals.in > 0 ? (
+                          <span className="tabular text-success">+{formatMoney(totals.in)}</span>
+                        ) : null}
+                        {totals.out > 0 ? (
+                          <span className="tabular text-destructive">−{formatMoney(totals.out)}</span>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <div className="mt-1 space-y-1">
-                      {dayEvents.slice(0, 3).map((event) => {
+                      {dayEvents.slice(0, view === "week" ? 6 : 3).map((event) => {
                         const paid = paidKeys.has(event.id);
                         return (
                           <div
@@ -570,11 +594,14 @@ function CashflowPage() {
                             )}
                           >
                             {paid ? "✓" : event.direction === "in" ? "▲" : "▼"} {event.label}
+                            {view === "week" ? ` · ${formatMoney(event.amount)}` : ""}
                           </div>
                         );
                       })}
-                      {dayEvents.length > 3 ? (
-                        <p className="text-[10px] text-muted-foreground">+{dayEvents.length - 3} more</p>
+                      {dayEvents.length > (view === "week" ? 6 : 3) ? (
+                        <p className="text-[10px] text-muted-foreground">
+                          +{dayEvents.length - (view === "week" ? 6 : 3)} more
+                        </p>
                       ) : null}
                     </div>
                   </button>
