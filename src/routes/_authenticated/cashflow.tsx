@@ -137,7 +137,8 @@ function CashflowPage() {
     const n = a.name.toLowerCase();
     return n.includes("opex") || n.includes("operating");
   });
-  const opexBalance = opexAccount ? (balancesByAccount(allocations).get(opexAccount.id) ?? 0) : 0;
+  const currentBalances = useMemo(() => balancesByAccount(allocations), [allocations]);
+  const opexBalance = opexAccount ? (currentBalances.get(opexAccount.id) ?? 0) : 0;
 
   const forecast = useMemo(() => {
     const today = new Date();
@@ -146,10 +147,24 @@ function CashflowPage() {
     return forecastBalance(opexBalance, forecastEvents, 30);
   }, [payments, invoices, opexBalance]);
 
-  const lowestPoint = forecast.reduce(
-    (min, p) => (p.balance < min.balance ? p : min),
-    forecast[0] ?? { label: "", date: "", balance: 0 },
+  // Multi-account projection from today up to the end of the visible range (min. 30 days ahead).
+  const projection = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const gridEnd = cells[cells.length - 1] ?? today;
+    const minEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 60);
+    const end = gridEnd > minEnd ? gridEnd : minEnd;
+    const projEvents = buildEvents(payments, invoices, today, end);
+    return projectAccountBalances(accounts, currentBalances, projEvents, today, end);
+  }, [accounts, currentBalances, payments, invoices, cells]);
+
+  const projectionByDate = useMemo(
+    () => new Map(projection.map((day) => [day.date, day])),
+    [projection],
   );
+
+  const selectedDay = projectionByDate.get(selectedDate);
+  const selectedEvents = events.filter((e) => e.date === selectedDate);
 
   const monthTotals = events.reduce(
     (acc, e) => {
@@ -159,6 +174,7 @@ function CashflowPage() {
     },
     { in: 0, out: 0 },
   );
+
 
   const create = useMutation({
     mutationFn: async () => {
