@@ -166,6 +166,13 @@ function CashflowPage() {
   const selectedDay = projectionByDate.get(selectedDate);
   const selectedEvents = events.filter((e) => e.date === selectedDate);
 
+  const lowestPoint = forecast.reduce(
+    (min, p) => (p.balance < min.balance ? p : min),
+    forecast[0] ?? { label: "", date: "", balance: 0 },
+  );
+
+  const firstGapDay = projection.find((d) => d.deficits.length > 0);
+
   const monthTotals = events.reduce(
     (acc, e) => {
       if (e.direction === "in") acc.in += e.amount;
@@ -191,9 +198,11 @@ function CashflowPage() {
         recurrence: form.recurrence,
         day_of_month: Math.min(Math.max(Number(form.day_of_month) || 1, 1), 31),
         start_date: form.start_date,
+        account_id: form.direction === "out" && form.account_id ? form.account_id : null,
       });
       if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success("Scheduled payment added");
       setOpen(false);
