@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { AlertTriangle, Calculator, Check, Loader2, TrendingUp } from "lucide-react";
+import { AlertTriangle, Calculator, CalendarDays, Check, Loader2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   Bar,
