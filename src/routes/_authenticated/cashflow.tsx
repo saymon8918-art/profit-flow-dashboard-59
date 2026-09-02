@@ -531,20 +531,25 @@ function CashflowPage() {
                       ) : null}
                     </div>
                     <div className="mt-1 space-y-1">
-                      {dayEvents.slice(0, 3).map((event) => (
-                        <div
-                          key={event.id}
-                          title={`${event.label} · ${formatMoney(event.amount)}`}
-                          className={cn(
-                            "truncate rounded px-1.5 py-0.5 text-[10px] font-medium",
-                            event.direction === "in"
-                              ? "bg-success/15 text-success"
-                              : "bg-destructive/15 text-destructive",
-                          )}
-                        >
-                          {event.direction === "in" ? "▲" : "▼"} {event.label}
-                        </div>
-                      ))}
+                      {dayEvents.slice(0, 3).map((event) => {
+                        const paid = paidKeys.has(event.id);
+                        return (
+                          <div
+                            key={event.id}
+                            title={`${event.label} · ${formatMoney(event.amount)}${paid ? " · completed" : ""}`}
+                            className={cn(
+                              "truncate rounded px-1.5 py-0.5 text-[10px] font-medium",
+                              paid
+                                ? "bg-muted text-muted-foreground line-through"
+                                : event.direction === "in"
+                                  ? "bg-success/15 text-success"
+                                  : "bg-destructive/15 text-destructive",
+                            )}
+                          >
+                            {paid ? "✓" : event.direction === "in" ? "▲" : "▼"} {event.label}
+                          </div>
+                        );
+                      })}
                       {dayEvents.length > 3 ? (
                         <p className="text-[10px] text-muted-foreground">+{dayEvents.length - 3} more</p>
                       ) : null}
@@ -639,23 +644,55 @@ function CashflowPage() {
                     <p className="mt-2 text-sm text-muted-foreground">No planned movements.</p>
                   ) : (
                     <div className="mt-2 space-y-2">
-                      {selectedEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          className="flex items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-2 text-sm"
-                        >
-                          <span className="truncate">{event.label}</span>
-                          <span
-                            className={cn(
-                              "tabular font-semibold",
-                              event.direction === "in" ? "text-success" : "text-destructive",
-                            )}
+                      {selectedEvents.map((event) => {
+                        const paid = paidKeys.has(event.id);
+                        return (
+                          <div
+                            key={event.id}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-2 text-sm"
                           >
-                            {event.direction === "in" ? "+" : "−"}
-                            {formatMoney(event.amount)}
-                          </span>
-                        </div>
-                      ))}
+                            <span className={cn("truncate", paid && "text-muted-foreground line-through")}>
+                              {event.label}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={cn(
+                                  "tabular font-semibold",
+                                  paid
+                                    ? "text-muted-foreground"
+                                    : event.direction === "in"
+                                      ? "text-success"
+                                      : "text-destructive",
+                                )}
+                              >
+                                {event.direction === "in" ? "+" : "−"}
+                                {formatMoney(event.amount)}
+                              </span>
+                              {paid ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => undoPayment.mutate(event.id)}
+                                  disabled={undoPayment.isPending}
+                                >
+                                  <Undo2 className="size-4" />
+                                  Undo
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => confirmPayment.mutate(event)}
+                                  disabled={confirmPayment.isPending}
+                                >
+                                  <Check className="size-4" />
+                                  Mark as paid
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -702,6 +739,57 @@ function CashflowPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-6">
+            <h2 className="text-sm font-semibold">Completed payments</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Confirmed movements already applied to your account balances.
+            </p>
+            {records.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Nothing confirmed yet. Pick a date above and mark a payment as paid.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-2">
+                {records.map((record) => (
+                  <div
+                    key={record.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-3 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{record.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {record.occurred_on} ·{" "}
+                        {record.direction === "in"
+                          ? "split across allocation accounts"
+                          : (accounts.find((a) => a.id === record.account_id)?.name ?? "auto account")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "tabular font-semibold",
+                          record.direction === "in" ? "text-success" : "text-destructive",
+                        )}
+                      >
+                        {record.direction === "in" ? "+" : "−"}
+                        {formatMoney(record.amount)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Undo payment"
+                        onClick={() => undoPayment.mutate(record.event_key)}
+                        disabled={undoPayment.isPending}
+                      >
+                        <Undo2 className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border bg-card p-6">
