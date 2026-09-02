@@ -38,7 +38,9 @@ export type CalendarEvent = {
   direction: "in" | "out";
   kind: "scheduled" | "invoice";
   category: string;
+  accountId?: string | null;
 };
+
 
 export function toKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -86,7 +88,9 @@ export function buildEvents(
         direction,
         kind: "scheduled",
         category: payment.category,
+        accountId: payment.account_id,
       });
+
     };
 
     if (payment.recurrence === "once") {
@@ -157,4 +161,99 @@ export function monthGrid(month: Date) {
     cells.push(new Date(month.getFullYear(), month.getMonth(), 1 - offset + i));
   }
   return cells;
+}
+
+/* ---------------- Projected account balances ---------------- */
+
+export type ProjectionAccount = {
+  id: string;
+  name: string;
+  percentage: number;
+  kind: string;
+  color: string;
+};
+
+/** Falls back to a sensible account when a planned outflow has no explicit account link. */
+export function resolveExpenseAccountId(
+  event: { accountId?: string | null; category: string },
+  accounts: ProjectionAccount[],
+): string | null {
+  if (event.accountId) return event.accountId;
+  const find = (needles: string[]) =>
+    accounts.find((a) => needles.some((n) => a.name.toLowerCase().includes(n)))?.id ?? null;
+  switch (event.category) {
+    case "payroll":
+      return find(["owner", "comp", "payroll", "salary"]) ?? find(["operating", "opex"]);
+    case "taxes":
+      return find(["tax"]) ?? find(["operating", "opex"]);
+    default:
+      return find(["operating", "opex"]);
+  }
+}
+
+export type ProjectionDay = {
+  date: string;
+  balances: Record<string, number>;
+  deficits: string[];
+  inflow: number;
+  outflow: number;
+};
+
+/**
+ * Day-by-day projection of every account balance.
+ * Inflow (scheduled inflow + unpaid invoices) is split across allocation accounts by their %,
+ * outflow is charged to the account it is linked to (or the best category match).
+ */
+export function projectAccountBalances(
+  accounts: ProjectionAccount[],
+  startingBalances: Map<string, number>,
+  events: CalendarEvent[],
+  from: Date,
+  to: Date,
+): ProjectionDay[] {
+  const allocation = accounts.filter((a) => a.kind !== "income");
+  const totalPct = allocation.reduce((s, a) => s + Number(a.percentage), 0);
+
+  const balances: Record<string, number> = {};
+  for (const account of accounts) balances[account.id] = startingBalances.get(account.id) ?? 0;
+
+  const byDate = new Map<string, CalendarEvent[]>();
+  for (const event of events) byDate.set(event.date, [...(byDate.get(event.date) ?? []), event]);
+
+  const days: ProjectionDay[] = [];
+  const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const last = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+
+  while (cursor <= last) {
+    const key = toKey(cursor);
+    let inflow = 0;
+    let outflow = 0;
+
+    for (const event of byDate.get(key) ?? []) {
+      if (event.direction === "in") {
+        inflow += event.amount;
+        if (totalPct > 0) {
+          for (const account of allocation) {
+            const share = (event.amount * Number(account.percentage)) / totalPct;
+            balances[account.id] = (balances[account.id] ?? 0) + share;
+          }
+        }
+      } else {
+        outflow += event.amount;
+        const target = resolveExpenseAccountId(event, accounts);
+        if (target) balances[target] = (balances[target] ?? 0) - event.amount;
+      }
+    }
+
+    days.push({
+      date: key,
+      balances: { ...balances },
+      deficits: allocation.filter((a) => (balances[a.id] ?? 0) < 0).map((a) => a.id),
+      inflow,
+      outflow,
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return days;
 }
