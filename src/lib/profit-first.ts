@@ -43,40 +43,40 @@ export const ACCOUNT_COLORS = [
 
 export const DEFAULT_ACCOUNTS = [
   {
-    name: "Выручка / Доходы",
-    description: "Базовый счёт: сюда поступает 100% выручки перед распределением.",
+    name: "Income / Revenue",
+    description: "Base account: 100% of revenue lands here before allocation.",
     percentage: 100,
     kind: "income",
     color: "acc-slate",
     sort_order: 0,
   },
   {
-    name: "Прибыль",
-    description: "Сначала плати себе: резерв прибыли компании.",
+    name: "Profit",
+    description: "Pay yourself first: резерв прибыли компании.",
     percentage: 5,
     kind: "allocation",
     color: "acc-emerald",
     sort_order: 1,
   },
   {
-    name: "Вознаграждение владельца",
-    description: "Зарплата и выплаты собственнику бизнеса.",
+    name: "Owner's Comp",
+    description: "Salary and payouts to the business owner.",
     percentage: 50,
     kind: "allocation",
     color: "acc-violet",
     sort_order: 2,
   },
   {
-    name: "Налоги",
-    description: "Резерв под налоговые обязательства.",
+    name: "Taxes",
+    description: "Reserve for tax obligations.",
     percentage: 15,
     kind: "allocation",
     color: "acc-blue",
     sort_order: 3,
   },
   {
-    name: "Операционные расходы",
-    description: "Аренда, подписки, подрядчики, реклама и прочие затраты.",
+    name: "Operating Expenses",
+    description: "Rent, subscriptions, contractors, ads and other costs.",
     percentage: 30,
     kind: "allocation",
     color: "acc-amber",
@@ -85,7 +85,7 @@ export const DEFAULT_ACCOUNTS = [
 ];
 
 export function formatMoney(value: number) {
-  return new Intl.NumberFormat("ru-RU", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,

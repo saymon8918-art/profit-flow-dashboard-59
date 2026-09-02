@@ -30,16 +30,16 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/accounts")({
   head: () => ({
     meta: [
-      { title: "Счета Profit First — настройка процентов" },
+      { title: "Profit First Accounts — Percentage Setup" },
       {
         name: "description",
         content:
-          "Создавайте, редактируйте и удаляйте счета Profit First и задавайте проценты распределения выручки.",
+          "Create, edit and delete Profit First accounts and set revenue allocation percentages.",
       },
-      { property: "og:title", content: "Счета Profit First" },
+      { property: "og:title", content: "Profit First Accounts" },
       {
         property: "og:description",
-        content: "Настройка целевых счетов и процентов распределения выручки.",
+        content: "Configure target accounts and revenue allocation percentages.",
       },
     ],
   }),
@@ -47,9 +47,9 @@ export const Route = createFileRoute("/_authenticated/accounts")({
 });
 
 const schema = z.object({
-  name: z.string().trim().min(1, "Введите название").max(80),
+  name: z.string().trim().min(1, "Enter a name").max(80),
   description: z.string().trim().max(300).optional(),
-  percentage: z.number().min(0, "Процент не может быть отрицательным").max(100, "Максимум 100%"),
+  percentage: z.number().min(0, "Percentage cannot be negative").max(100, "Maximum is 100%"),
   color: z.string(),
 });
 
@@ -88,11 +88,11 @@ function AccountsPage() {
         percentage: Number(form.percentage),
         color: form.color,
       });
-      if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Проверьте данные");
+      if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Please check your input");
 
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
-      if (!userId) throw new Error("Нет сессии");
+      if (!userId) throw new Error("No active session");
 
       const payload = {
         name: parsed.data.name,
@@ -115,7 +115,7 @@ function AccountsPage() {
       }
     },
     onSuccess: () => {
-      toast.success(form.id ? "Счёт обновлён" : "Счёт добавлен");
+      toast.success(form.id ? "Account updated" : "Account added");
       setOpen(false);
       setForm(emptyForm);
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
@@ -129,7 +129,7 @@ function AccountsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Счёт удалён");
+      toast.success("Account deleted");
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -148,7 +148,7 @@ function AccountsPage() {
   }
 
   return (
-    <AppShell title="Счета" description="Целевые счета и проценты распределения">
+    <AppShell title="Accounts" description="Target accounts and allocation percentages">
       <div className="space-y-6">
         <div
           className={cn(
@@ -163,11 +163,11 @@ function AccountsPage() {
               <AlertTriangle className="mt-0.5 size-4 text-warning" />
             )}
             <div>
-              <p className="font-medium">Сумма процентов: {sumPct.toFixed(2)}%</p>
+              <p className="font-medium">Total percentage: {sumPct.toFixed(2)}%</p>
               <p className="text-muted-foreground">
                 {balanced
-                  ? "Отлично — распределение сбалансировано."
-                  : "Сумма процентов по всем счетам (кроме счёта выручки) должна быть равна 100%."}
+                  ? "Great — your allocation is balanced."
+                  : "The percentages of all accounts (except the income account) must add up to 100%."}
               </p>
             </div>
           </div>
@@ -178,7 +178,7 @@ function AccountsPage() {
             }}
           >
             <Plus className="size-4" />
-            Новый счёт
+            New account
           </Button>
         </div>
 
@@ -203,12 +203,12 @@ function AccountsPage() {
                   </span>
                 </div>
                 <p className="mt-2 min-h-10 text-xs text-muted-foreground">
-                  {account.description ?? "Без описания"}
+                  {account.description ?? "No description"}
                 </p>
                 <div className="mt-4 flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => edit(account)}>
                     <Pencil className="size-3.5" />
-                    Изменить
+                    Edit
                   </Button>
                   {account.kind !== "income" ? (
                     <Button
@@ -218,7 +218,7 @@ function AccountsPage() {
                       onClick={() => remove.mutate(account.id)}
                     >
                       <Trash2 className="size-3.5" />
-                      Удалить
+                      Delete
                     </Button>
                   ) : null}
                 </div>
@@ -231,24 +231,24 @@ function AccountsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{form.id ? "Редактировать счёт" : "Новый счёт"}</DialogTitle>
+            <DialogTitle>{form.id ? "Edit account" : "New account"}</DialogTitle>
             <DialogDescription>
-              Задайте название, процент распределения и назначение счёта.
+              Set the name, allocation percentage and purpose of the account.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Название</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
                 maxLength={80}
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Например: Дрип-счёт"
+                placeholder="e.g. Drip account"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pct">Процент распределения (%)</Label>
+              <Label htmlFor="pct">Allocation percentage (%)</Label>
               <Input
                 id="pct"
                 inputMode="decimal"
@@ -258,17 +258,17 @@ function AccountsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="desc">Описание / цель</Label>
+              <Label htmlFor="desc">Description / purpose</Label>
               <Textarea
                 id="desc"
                 maxLength={300}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Для чего нужен этот счёт"
+                placeholder="What this account is for"
               />
             </div>
             <div className="space-y-2">
-              <Label>Цвет</Label>
+              <Label>Color</Label>
               <div className="flex flex-wrap gap-2">
                 {ACCOUNT_COLORS.map((color) => (
                   <button
@@ -288,11 +288,11 @@ function AccountsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Отмена
+              Cancel
             </Button>
             <Button onClick={() => save.mutate()} disabled={save.isPending}>
               {save.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-              Сохранить
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>

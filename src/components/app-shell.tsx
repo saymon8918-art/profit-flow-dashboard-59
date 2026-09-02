@@ -8,9 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
-  { to: "/accounts", label: "Счета", icon: Wallet },
-  { to: "/history", label: "История", icon: History },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/accounts", label: "Accounts", icon: Wallet },
+  { to: "/history", label: "History", icon: History },
 ] as const;
 
 export function AppShell({
@@ -63,7 +63,7 @@ export function AppShell({
         <div className="mt-auto">
           <Button variant="ghost" className="w-full justify-start gap-3" onClick={signOut}>
             <LogOut className="size-4" />
-            Выйти
+            Sign out
           </Button>
         </div>
       </aside>
@@ -76,7 +76,7 @@ export function AppShell({
               size="icon"
               className="lg:hidden"
               onClick={() => setOpen((v) => !v)}
-              aria-label="Меню"
+              aria-label="Menu"
             >
               <Menu className="size-5" />
             </Button>
@@ -91,7 +91,7 @@ export function AppShell({
             {nav}
             <Button variant="ghost" className="mt-1 w-full justify-start gap-3" onClick={signOut}>
               <LogOut className="size-4" />
-              Выйти
+              Sign out
             </Button>
           </div>
         </header>

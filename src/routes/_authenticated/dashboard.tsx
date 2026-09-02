@@ -36,15 +36,15 @@ import {
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Дашборд распределения — Profit First" },
+      { title: "Allocation Dashboard — Profit First" },
       {
         name: "description",
-        content: "Балансы счетов, калькулятор распределения выручки и аналитика Profit First.",
+        content: "Account balances, revenue allocation calculator and Profit First analytics.",
       },
-      { property: "og:title", content: "Дашборд распределения — Profit First" },
+      { property: "og:title", content: "Allocation Dashboard — Profit First" },
       {
         property: "og:description",
-        content: "Балансы счетов, калькулятор распределения выручки и аналитика.",
+        content: "Account balances, revenue allocation calculator and analytics.",
       },
     ],
   }),
@@ -104,7 +104,7 @@ function Dashboard() {
     const map = new Map<string, { label: string; revenue: number }>();
     for (const alloc of periodAllocations) {
       const d = new Date(alloc.occurred_at);
-      const label = d.toLocaleDateString("ru-RU", { day: "2-digit", month: "short" });
+      const label = d.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
       const prev = map.get(label);
       map.set(label, { label, revenue: (prev?.revenue ?? 0) + alloc.revenue });
     }
@@ -114,7 +114,7 @@ function Dashboard() {
   function calculate() {
     const revenue = Number(revenueInput.replace(/\s|,/g, ""));
     if (!Number.isFinite(revenue) || revenue <= 0) {
-      toast.error("Введите положительную сумму выручки");
+      toast.error("Enter a positive revenue amount");
       return;
     }
     setPreview({
@@ -131,7 +131,7 @@ function Dashboard() {
       if (!preview) return;
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
-      if (!userId) throw new Error("Нет сессии");
+      if (!userId) throw new Error("No active session");
 
       const { data: allocation, error } = await supabase
         .from("allocations")
@@ -153,7 +153,7 @@ function Dashboard() {
       if (itemsError) throw itemsError;
     },
     onSuccess: () => {
-      toast.success("Распределение зафиксировано");
+      toast.success("Allocation recorded");
       setPreview(null);
       setRevenueInput("");
       queryClient.invalidateQueries({ queryKey: ["allocations"] });
@@ -164,7 +164,7 @@ function Dashboard() {
   const loading = accountsQuery.isLoading || allocationsQuery.isLoading;
 
   return (
-    <AppShell title="Дашборд" description="Распределение выручки по методике Profit First">
+    <AppShell title="Dashboard" description="Revenue allocation with the Profit First method">
       {loading ? (
         <div className="flex h-64 items-center justify-center text-muted-foreground">
           <Loader2 className="size-5 animate-spin" />
@@ -175,10 +175,10 @@ function Dashboard() {
             <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm">
               <AlertTriangle className="mt-0.5 size-4 text-warning" />
               <div>
-                <p className="font-medium">Сумма процентов распределения — {sumPct.toFixed(2)}%</p>
+                <p className="font-medium">Total allocation percentage — {sumPct.toFixed(2)}%</p>
                 <p className="text-muted-foreground">
-                  Для корректного распределения сумма по всем счетам (кроме счёта выручки) должна
-                  равняться 100%.
+                  For a correct allocation, the total across all accounts (except the income account) must
+                  equal 100%.
                 </p>
               </div>
             </div>
@@ -188,11 +188,11 @@ function Dashboard() {
             <div className="rounded-2xl border bg-card p-6 shadow-elevate lg:col-span-2">
               <div className="flex items-center gap-2">
                 <Calculator className="size-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold">Калькулятор распределения</h2>
+                <h2 className="text-sm font-semibold">Allocation calculator</h2>
               </div>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="revenue">Поступившая выручка</Label>
+                  <Label htmlFor="revenue">Incoming revenue</Label>
                   <Input
                     id="revenue"
                     inputMode="decimal"
@@ -201,7 +201,7 @@ function Dashboard() {
                     onChange={(e) => setRevenueInput(e.target.value)}
                   />
                 </div>
-                <Button onClick={calculate}>Рассчитать и распределить</Button>
+                <Button onClick={calculate}>Calculate and allocate</Button>
               </div>
 
               {preview ? (
@@ -226,7 +226,7 @@ function Dashboard() {
                   ))}
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-sm text-muted-foreground">
-                      Итого выручка: <span className="tabular">{formatMoney(preview.revenue)}</span>
+                      Total revenue: <span className="tabular">{formatMoney(preview.revenue)}</span>
                     </span>
                     <Button onClick={() => commit.mutate()} disabled={commit.isPending}>
                       {commit.isPending ? (
@@ -234,13 +234,13 @@ function Dashboard() {
                       ) : (
                         <Check className="size-4" />
                       )}
-                      Зафиксировать распределение
+                      Record allocation
                     </Button>
                   </div>
                 </div>
               ) : (
                 <p className="mt-6 text-sm text-muted-foreground">
-                  Введите сумму поступления, чтобы увидеть расчёт по каждому счёту.
+                  Enter an incoming amount to see the breakdown per account.
                 </p>
               )}
             </div>
@@ -248,21 +248,21 @@ function Dashboard() {
             <div className="rounded-2xl border bg-card p-6 shadow-elevate">
               <div className="flex items-center gap-2">
                 <TrendingUp className="size-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold">Всего выручки</h2>
+                <h2 className="text-sm font-semibold">Total revenue</h2>
               </div>
               <p className="tabular mt-4 text-3xl font-semibold tracking-tight">
                 {formatMoney(totalRevenue)}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {allocations.length} зафиксированных распределений
+                {allocations.length} recorded allocations
               </p>
               <div className="mt-6 space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Счетов</span>
+                  <span className="text-muted-foreground">Accounts</span>
                   <span className="tabular">{accounts.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Сумма процентов</span>
+                  <span className="text-muted-foreground">Total percentage</span>
                   <span className="tabular">{sumPct.toFixed(2)}%</span>
                 </div>
               </div>
@@ -270,7 +270,7 @@ function Dashboard() {
           </div>
 
           <div>
-            <h2 className="mb-3 text-sm font-semibold">Балансы счетов</h2>
+            <h2 className="mb-3 text-sm font-semibold">Account balances</h2>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {targets.map((account) => {
                 const balance = balances.get(account.id) ?? 0;
@@ -309,7 +309,7 @@ function Dashboard() {
                       />
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {share.toFixed(1)}% от всей выручки
+                      {share.toFixed(1)}% of all revenue
                     </p>
                   </div>
                 );
@@ -320,15 +320,15 @@ function Dashboard() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border bg-card p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold">Распределение за период</h2>
+                <h2 className="text-sm font-semibold">Allocation for the period</h2>
                 <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
                   <SelectTrigger className="w-36">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="month">Месяц</SelectItem>
-                    <SelectItem value="quarter">Квартал</SelectItem>
-                    <SelectItem value="year">Год</SelectItem>
+                    <SelectItem value="month">Month</SelectItem>
+                    <SelectItem value="quarter">Quarter</SelectItem>
+                    <SelectItem value="year">Year</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -352,7 +352,7 @@ function Dashboard() {
             </div>
 
             <div className="rounded-2xl border bg-card p-6">
-              <h2 className="text-sm font-semibold">Поступления за период</h2>
+              <h2 className="text-sm font-semibold">Revenue for the period</h2>
               <div className="mt-4 h-72">
                 {barData.length === 0 ? (
                   <EmptyChart />
@@ -379,7 +379,7 @@ function Dashboard() {
 function EmptyChart() {
   return (
     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-      Нет данных за выбранный период
+      No data for the selected period
     </div>
   );
 }

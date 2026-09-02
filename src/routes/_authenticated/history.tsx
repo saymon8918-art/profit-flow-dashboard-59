@@ -22,15 +22,15 @@ import { fetchAllocations, formatMoney } from "@/lib/profit-first";
 export const Route = createFileRoute("/_authenticated/history")({
   head: () => ({
     meta: [
-      { title: "История распределений — Profit First" },
+      { title: "Allocation History — Profit First" },
       {
         name: "description",
-        content: "Таблица зафиксированных распределений выручки с фильтрацией по датам.",
+        content: "Таблица recorded allocations выручки с фильтрацией по датам.",
       },
-      { property: "og:title", content: "История распределений — Profit First" },
+      { property: "og:title", content: "Allocation History — Profit First" },
       {
         property: "og:description",
-        content: "Все поступления и распределения по счетам с фильтром по датам.",
+        content: "All income and account allocations with a date filter.",
       },
     ],
   }),
@@ -66,22 +66,22 @@ function HistoryPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Запись удалена");
+      toast.success("Entry deleted");
       queryClient.invalidateQueries({ queryKey: ["allocations"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   return (
-    <AppShell title="История" description="Зафиксированные поступления и распределения">
+    <AppShell title="History" description="Recorded income and allocations">
       <div className="space-y-6">
         <div className="flex flex-wrap items-end gap-4 rounded-xl border bg-card p-4">
           <div className="space-y-2">
-            <Label htmlFor="from">С даты</Label>
+            <Label htmlFor="from">From date</Label>
             <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="to">По дату</Label>
+            <Label htmlFor="to">To date</Label>
             <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
           <Button
@@ -91,10 +91,10 @@ function HistoryPage() {
               setTo("");
             }}
           >
-            Сбросить
+            Reset
           </Button>
           <div className="ml-auto text-sm text-muted-foreground">
-            Всего за период:{" "}
+            Total for the period:{" "}
             <span className="tabular font-semibold text-foreground">
               {formatMoney(totalRevenue)}
             </span>
@@ -107,16 +107,16 @@ function HistoryPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground">
-            Пока нет зафиксированных распределений.
+            Пока нет recorded allocations.
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Дата</TableHead>
-                  <TableHead>Выручка</TableHead>
-                  <TableHead>Распределение по счетам</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Allocation by account</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
@@ -124,7 +124,7 @@ function HistoryPage() {
                 {filtered.map((allocation) => (
                   <TableRow key={allocation.id}>
                     <TableCell className="whitespace-nowrap">
-                      {new Date(allocation.occurred_at).toLocaleDateString("ru-RU", {
+                      {new Date(allocation.occurred_at).toLocaleDateString("en-US", {
                         day: "2-digit",
                         month: "2-digit",
                         year: "numeric",
@@ -150,7 +150,7 @@ function HistoryPage() {
                         size="icon"
                         variant="ghost"
                         className="text-destructive hover:text-destructive"
-                        aria-label="Удалить"
+                        aria-label="Delete"
                         onClick={() => remove.mutate(allocation.id)}
                       >
                         <Trash2 className="size-4" />
