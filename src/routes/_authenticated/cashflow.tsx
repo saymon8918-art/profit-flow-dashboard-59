@@ -123,14 +123,17 @@ function CashflowPage() {
   const paidKeys = useMemo(() => new Set(records.map((r) => r.event_key)), [records]);
 
   const cells = useMemo(() => {
-    const all = monthGrid(month);
-    if (view === "month") return all;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const index = all.findIndex((d) => toKey(d) === toKey(today));
-    const anchor = index >= 0 ? Math.floor(index / 7) : 0;
-    return all.slice(anchor * 7, anchor * 7 + 7);
-  }, [month, view]);
+    if (view === "month") return monthGrid(month);
+    return Array.from(
+      { length: 7 },
+      (_, i) => new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate() + i),
+    );
+  }, [month, view, weekAnchor]);
+
+  const weekEnd = useMemo(
+    () => new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate() + 6),
+    [weekAnchor],
+  );
 
   const events = useMemo(() => {
     if (cells.length === 0) return [];
