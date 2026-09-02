@@ -117,7 +117,11 @@ export async function fetchAccounts(): Promise<Account[]> {
 }
 
 function normalizeAccount(a: Record<string, unknown>): Account {
-  return { ...(a as unknown as Account), percentage: Number(a["percentage"] ?? 0) };
+  return {
+    ...(a as unknown as Account),
+    percentage: Number(a["percentage"] ?? 0),
+    target_percentage: Number(a["target_percentage"] ?? 0),
+  };
 }
 
 export async function fetchAllocations(): Promise<Allocation[]> {
