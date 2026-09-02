@@ -7,8 +7,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Check,
   Plus,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -45,7 +47,9 @@ import {
   formatMoney,
 } from "@/lib/profit-first";
 import {
+  applyPaymentRecords,
   buildEvents,
+  fetchPaymentRecords,
   fetchScheduledPayments,
   forecastBalance,
   monthGrid,
@@ -104,11 +108,14 @@ function CashflowPage() {
   const invoicesQuery = useQuery({ queryKey: ["invoices"], queryFn: fetchInvoices });
   const accountsQuery = useQuery({ queryKey: ["accounts"], queryFn: fetchAccounts });
   const allocationsQuery = useQuery({ queryKey: ["allocations"], queryFn: fetchAllocations });
+  const recordsQuery = useQuery({ queryKey: ["payment_records"], queryFn: fetchPaymentRecords });
 
   const payments = paymentsQuery.data ?? [];
   const invoices = invoicesQuery.data ?? [];
   const accounts = accountsQuery.data ?? [];
   const allocations = allocationsQuery.data ?? [];
+  const records = recordsQuery.data ?? [];
+  const paidKeys = useMemo(() => new Set(records.map((r) => r.event_key)), [records]);
 
   const cells = useMemo(() => {
     const all = monthGrid(month);
@@ -137,15 +144,20 @@ function CashflowPage() {
     const n = a.name.toLowerCase();
     return n.includes("opex") || n.includes("operating");
   });
-  const currentBalances = useMemo(() => balancesByAccount(allocations), [allocations]);
+  const currentBalances = useMemo(
+    () => applyPaymentRecords(balancesByAccount(allocations), records, accounts),
+    [allocations, records, accounts],
+  );
   const opexBalance = opexAccount ? (currentBalances.get(opexAccount.id) ?? 0) : 0;
 
   const forecast = useMemo(() => {
     const today = new Date();
     const horizon = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
-    const forecastEvents = buildEvents(payments, invoices, today, horizon);
+    const forecastEvents = buildEvents(payments, invoices, today, horizon).filter(
+      (e) => !paidKeys.has(e.id),
+    );
     return forecastBalance(opexBalance, forecastEvents, 30);
-  }, [payments, invoices, opexBalance]);
+  }, [payments, invoices, opexBalance, paidKeys]);
 
   // Multi-account projection from today up to the end of the visible range (min. 30 days ahead).
   const projection = useMemo(() => {
@@ -154,9 +166,11 @@ function CashflowPage() {
     const gridEnd = cells[cells.length - 1] ?? today;
     const minEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 60);
     const end = gridEnd > minEnd ? gridEnd : minEnd;
-    const projEvents = buildEvents(payments, invoices, today, end);
+    const projEvents = buildEvents(payments, invoices, today, end).filter(
+      (e) => !paidKeys.has(e.id),
+    );
     return projectAccountBalances(accounts, currentBalances, projEvents, today, end);
-  }, [accounts, currentBalances, payments, invoices, cells]);
+  }, [accounts, currentBalances, payments, invoices, cells, paidKeys]);
 
   const projectionByDate = useMemo(
     () => new Map(projection.map((day) => [day.date, day])),
@@ -212,6 +226,51 @@ function CashflowPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const confirmPayment = useMutation({
+    mutationFn: async (event: CalendarEvent) => {
+      const user_id = await currentUserId();
+      const { error } = await supabase.from("payment_records").insert({
+        user_id,
+        event_key: event.id,
+        scheduled_payment_id: event.scheduledPaymentId ?? null,
+        invoice_id: event.invoiceId ?? null,
+        account_id: event.accountId ?? null,
+        name: event.label,
+        category: event.category,
+        direction: event.direction,
+        amount: event.amount,
+        occurred_on: event.date,
+      });
+      if (error) throw error;
+      if (event.invoiceId) {
+        await supabase.from("invoices").update({ status: "paid" }).eq("id", event.invoiceId);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Payment marked as completed");
+      queryClient.invalidateQueries({ queryKey: ["payment_records"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const undoPayment = useMutation({
+    mutationFn: async (eventKey: string) => {
+      const record = records.find((r) => r.event_key === eventKey);
+      const { error } = await supabase.from("payment_records").delete().eq("event_key", eventKey);
+      if (error) throw error;
+      if (record?.invoice_id) {
+        await supabase.from("invoices").update({ status: "sent" }).eq("id", record.invoice_id);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Marked as not paid");
+      queryClient.invalidateQueries({ queryKey: ["payment_records"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("scheduled_payments").delete().eq("id", id);
@@ -220,6 +279,7 @@ function CashflowPage() {
     onSuccess: () => {
       toast.success("Removed");
       queryClient.invalidateQueries({ queryKey: ["scheduled_payments"] });
+      queryClient.invalidateQueries({ queryKey: ["payment_records"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -472,20 +532,25 @@ function CashflowPage() {
                       ) : null}
                     </div>
                     <div className="mt-1 space-y-1">
-                      {dayEvents.slice(0, 3).map((event) => (
-                        <div
-                          key={event.id}
-                          title={`${event.label} · ${formatMoney(event.amount)}`}
-                          className={cn(
-                            "truncate rounded px-1.5 py-0.5 text-[10px] font-medium",
-                            event.direction === "in"
-                              ? "bg-success/15 text-success"
-                              : "bg-destructive/15 text-destructive",
-                          )}
-                        >
-                          {event.direction === "in" ? "▲" : "▼"} {event.label}
-                        </div>
-                      ))}
+                      {dayEvents.slice(0, 3).map((event) => {
+                        const paid = paidKeys.has(event.id);
+                        return (
+                          <div
+                            key={event.id}
+                            title={`${event.label} · ${formatMoney(event.amount)}${paid ? " · completed" : ""}`}
+                            className={cn(
+                              "truncate rounded px-1.5 py-0.5 text-[10px] font-medium",
+                              paid
+                                ? "bg-muted text-muted-foreground line-through"
+                                : event.direction === "in"
+                                  ? "bg-success/15 text-success"
+                                  : "bg-destructive/15 text-destructive",
+                            )}
+                          >
+                            {paid ? "✓" : event.direction === "in" ? "▲" : "▼"} {event.label}
+                          </div>
+                        );
+                      })}
                       {dayEvents.length > 3 ? (
                         <p className="text-[10px] text-muted-foreground">+{dayEvents.length - 3} more</p>
                       ) : null}
@@ -580,23 +645,55 @@ function CashflowPage() {
                     <p className="mt-2 text-sm text-muted-foreground">No planned movements.</p>
                   ) : (
                     <div className="mt-2 space-y-2">
-                      {selectedEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          className="flex items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-2 text-sm"
-                        >
-                          <span className="truncate">{event.label}</span>
-                          <span
-                            className={cn(
-                              "tabular font-semibold",
-                              event.direction === "in" ? "text-success" : "text-destructive",
-                            )}
+                      {selectedEvents.map((event) => {
+                        const paid = paidKeys.has(event.id);
+                        return (
+                          <div
+                            key={event.id}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-2 text-sm"
                           >
-                            {event.direction === "in" ? "+" : "−"}
-                            {formatMoney(event.amount)}
-                          </span>
-                        </div>
-                      ))}
+                            <span className={cn("truncate", paid && "text-muted-foreground line-through")}>
+                              {event.label}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={cn(
+                                  "tabular font-semibold",
+                                  paid
+                                    ? "text-muted-foreground"
+                                    : event.direction === "in"
+                                      ? "text-success"
+                                      : "text-destructive",
+                                )}
+                              >
+                                {event.direction === "in" ? "+" : "−"}
+                                {formatMoney(event.amount)}
+                              </span>
+                              {paid ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => undoPayment.mutate(event.id)}
+                                  disabled={undoPayment.isPending}
+                                >
+                                  <Undo2 className="size-4" />
+                                  Undo
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => confirmPayment.mutate(event)}
+                                  disabled={confirmPayment.isPending}
+                                >
+                                  <Check className="size-4" />
+                                  Mark as paid
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -643,6 +740,57 @@ function CashflowPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-6">
+            <h2 className="text-sm font-semibold">Completed payments</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Confirmed movements already applied to your account balances.
+            </p>
+            {records.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Nothing confirmed yet. Pick a date above and mark a payment as paid.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-2">
+                {records.map((record) => (
+                  <div
+                    key={record.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-3 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{record.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {record.occurred_on} ·{" "}
+                        {record.direction === "in"
+                          ? "split across allocation accounts"
+                          : (accounts.find((a) => a.id === record.account_id)?.name ?? "auto account")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "tabular font-semibold",
+                          record.direction === "in" ? "text-success" : "text-destructive",
+                        )}
+                      >
+                        {record.direction === "in" ? "+" : "−"}
+                        {formatMoney(record.amount)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Undo payment"
+                        onClick={() => undoPayment.mutate(record.event_key)}
+                        disabled={undoPayment.isPending}
+                      >
+                        <Undo2 className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border bg-card p-6">

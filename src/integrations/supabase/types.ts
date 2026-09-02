@@ -203,6 +203,79 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_records: {
+        Row: {
+          account_id: string | null
+          amount: number
+          category: string
+          created_at: string
+          direction: string
+          event_key: string
+          id: string
+          invoice_id: string | null
+          name: string
+          note: string | null
+          occurred_on: string
+          scheduled_payment_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount?: number
+          category?: string
+          created_at?: string
+          direction?: string
+          event_key: string
+          id?: string
+          invoice_id?: string | null
+          name: string
+          note?: string | null
+          occurred_on?: string
+          scheduled_payment_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category?: string
+          created_at?: string
+          direction?: string
+          event_key?: string
+          id?: string
+          invoice_id?: string | null
+          name?: string
+          note?: string | null
+          occurred_on?: string
+          scheduled_payment_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_records_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_records_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_records_scheduled_payment_id_fkey"
+            columns: ["scheduled_payment_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_payments: {
         Row: {
           account_id: string | null

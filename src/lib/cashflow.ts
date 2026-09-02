@@ -39,7 +39,23 @@ export type CalendarEvent = {
   kind: "scheduled" | "invoice";
   category: string;
   accountId?: string | null;
+  scheduledPaymentId?: string | null;
+  invoiceId?: string | null;
 };
+
+export type PaymentRecord = {
+  id: string;
+  event_key: string;
+  scheduled_payment_id: string | null;
+  invoice_id: string | null;
+  account_id: string | null;
+  name: string;
+  category: string;
+  direction: string;
+  amount: number;
+  occurred_on: string;
+};
+
 
 
 export function toKey(d: Date) {
@@ -62,6 +78,17 @@ export async function fetchScheduledPayments(): Promise<ScheduledPayment[]> {
   return (data ?? []).map((p) => ({ ...p, amount: Number(p.amount) }));
 }
 
+export async function fetchPaymentRecords(): Promise<PaymentRecord[]> {
+  const { data, error } = await supabase
+    .from("payment_records")
+    .select(
+      "id, event_key, scheduled_payment_id, invoice_id, account_id, name, category, direction, amount, occurred_on",
+    )
+    .order("occurred_on", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ ...r, amount: Number(r.amount) }));
+}
+
 /** Expands recurring payments + invoice due dates into dated events inside [from, to]. */
 export function buildEvents(
   payments: ScheduledPayment[],
@@ -76,12 +103,12 @@ export function buildEvents(
     const end = payment.end_date ? parseKey(payment.end_date) : null;
     const direction = payment.direction === "in" ? "in" : "out";
 
-    const push = (date: Date, index: number) => {
+    const push = (date: Date, _index: number) => {
       if (date < from || date > to) return;
       if (date < start) return;
       if (end && date > end) return;
       events.push({
-        id: `${payment.id}-${index}`,
+        id: `sp::${payment.id}::${toKey(date)}`,
         date: toKey(date),
         label: payment.name,
         amount: payment.amount,
@@ -89,6 +116,7 @@ export function buildEvents(
         kind: "scheduled",
         category: payment.category,
         accountId: payment.account_id,
+        scheduledPaymentId: payment.id,
       });
 
     };
@@ -118,13 +146,14 @@ export function buildEvents(
     const due = parseKey(invoice.due_at);
     if (due < from || due > to) continue;
     events.push({
-      id: `invoice-${invoice.id}`,
+      id: `inv::${invoice.id}::${toKey(due)}`,
       date: toKey(due),
       label: `${invoice.number} · ${invoice.client_name}`,
       amount: invoice.amount,
       direction: "in",
       kind: "invoice",
       category: "invoice",
+      invoiceId: invoice.id,
     });
   }
 
@@ -256,4 +285,35 @@ export function projectAccountBalances(
   }
 
   return days;
+}
+
+/**
+ * Applies confirmed payments to the current account balances:
+ * inflow is split across allocation accounts by percentage, outflow reduces its linked account.
+ */
+export function applyPaymentRecords(
+  base: Map<string, number>,
+  records: PaymentRecord[],
+  accounts: ProjectionAccount[],
+): Map<string, number> {
+  const result = new Map(base);
+  const allocation = accounts.filter((a) => a.kind !== "income");
+  const totalPct = allocation.reduce((s, a) => s + Number(a.percentage), 0);
+
+  for (const record of records) {
+    if (record.direction === "in") {
+      if (totalPct <= 0) continue;
+      for (const account of allocation) {
+        const share = (record.amount * Number(account.percentage)) / totalPct;
+        result.set(account.id, (result.get(account.id) ?? 0) + share);
+      }
+    } else {
+      const target = resolveExpenseAccountId(
+        { accountId: record.account_id, category: record.category },
+        accounts,
+      );
+      if (target) result.set(target, (result.get(target) ?? 0) - record.amount);
+    }
+  }
+  return result;
 }

@@ -33,7 +33,14 @@ import {
   totalPercentage,
   type Account,
 } from "@/lib/profit-first";
-import { buildEvents, fetchScheduledPayments, monthGrid, toKey } from "@/lib/cashflow";
+import {
+  applyPaymentRecords,
+  buildEvents,
+  fetchPaymentRecords,
+  fetchScheduledPayments,
+  monthGrid,
+  toKey,
+} from "@/lib/cashflow";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -72,12 +79,17 @@ function Dashboard() {
 
   const accountsQuery = useQuery({ queryKey: ["accounts"], queryFn: fetchAccounts });
   const allocationsQuery = useQuery({ queryKey: ["allocations"], queryFn: fetchAllocations });
+  const recordsQuery = useQuery({ queryKey: ["payment_records"], queryFn: fetchPaymentRecords });
 
   const accounts = accountsQuery.data ?? [];
   const allocations = allocationsQuery.data ?? [];
   const targets = allocationAccounts(accounts);
   const sumPct = totalPercentage(accounts);
-  const balances = balancesByAccount(allocations);
+  const balances = applyPaymentRecords(
+    balancesByAccount(allocations),
+    recordsQuery.data ?? [],
+    accounts,
+  );
   const totalRevenue = allocations.reduce((s, a) => s + a.revenue, 0);
 
   const periodAllocations = useMemo(() => {
