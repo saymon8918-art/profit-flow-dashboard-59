@@ -28,10 +28,12 @@ import {
   balancesByAccount,
   fetchAccounts,
   fetchAllocations,
+  fetchInvoices,
   formatMoney,
   totalPercentage,
   type Account,
 } from "@/lib/profit-first";
+import { buildEvents, fetchScheduledPayments, monthGrid, toKey } from "@/lib/cashflow";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
