@@ -203,6 +203,65 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_payments: {
+        Row: {
+          account_id: string | null
+          amount: number
+          category: string
+          created_at: string
+          day_of_month: number
+          direction: string
+          end_date: string | null
+          id: string
+          name: string
+          note: string | null
+          recurrence: string
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount?: number
+          category?: string
+          created_at?: string
+          day_of_month?: number
+          direction?: string
+          end_date?: string | null
+          id?: string
+          name: string
+          note?: string | null
+          recurrence?: string
+          start_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category?: string
+          created_at?: string
+          day_of_month?: number
+          direction?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          note?: string | null
+          recurrence?: string
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string
