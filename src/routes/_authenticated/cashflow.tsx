@@ -1,0 +1,529 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import { AppShell } from "@/components/app-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  balancesByAccount,
+  currentUserId,
+  fetchAccounts,
+  fetchAllocations,
+  fetchInvoices,
+  formatMoney,
+} from "@/lib/profit-first";
+import {
+  buildEvents,
+  fetchScheduledPayments,
+  forecastBalance,
+  monthGrid,
+  PAYMENT_CATEGORIES,
+  RECURRENCES,
+  toKey,
+  type CalendarEvent,
+} from "@/lib/cashflow";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/_authenticated/cashflow")({
+  head: () => ({
+    meta: [
+      { title: "Cashflow Calendar — Profit First" },
+      {
+        name: "description",
+        content:
+          "Payment calendar with recurring expenses, expected client inflow and a 30-day cash gap forecast.",
+      },
+      { property: "og:title", content: "Cashflow Calendar — Profit First" },
+      {
+        property: "og:description",
+        content: "Plan recurring outflows, expected invoices and spot cash gaps early.",
+      },
+    ],
+  }),
+  component: CashflowPage,
+});
+
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function CashflowPage() {
+  const queryClient = useQueryClient();
+  const [month, setMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [view, setView] = useState<"month" | "week">("month");
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    amount: "",
+    category: "rent",
+    direction: "out",
+    recurrence: "monthly",
+    day_of_month: "1",
+    start_date: toKey(new Date()),
+  });
+
+  const paymentsQuery = useQuery({ queryKey: ["scheduled_payments"], queryFn: fetchScheduledPayments });
+  const invoicesQuery = useQuery({ queryKey: ["invoices"], queryFn: fetchInvoices });
+  const accountsQuery = useQuery({ queryKey: ["accounts"], queryFn: fetchAccounts });
+  const allocationsQuery = useQuery({ queryKey: ["allocations"], queryFn: fetchAllocations });
+
+  const payments = paymentsQuery.data ?? [];
+  const invoices = invoicesQuery.data ?? [];
+  const accounts = accountsQuery.data ?? [];
+  const allocations = allocationsQuery.data ?? [];
+
+  const cells = useMemo(() => {
+    const all = monthGrid(month);
+    if (view === "month") return all;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const index = all.findIndex((d) => toKey(d) === toKey(today));
+    const anchor = index >= 0 ? Math.floor(index / 7) : 0;
+    return all.slice(anchor * 7, anchor * 7 + 7);
+  }, [month, view]);
+
+  const events = useMemo(() => {
+    if (cells.length === 0) return [];
+    return buildEvents(payments, invoices, cells[0]!, cells[cells.length - 1]!);
+  }, [payments, invoices, cells]);
+
+  const byDay = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const event of events) {
+      map.set(event.date, [...(map.get(event.date) ?? []), event]);
+    }
+    return map;
+  }, [events]);
+
+  const opexAccount = accounts.find((a) => {
+    const n = a.name.toLowerCase();
+    return n.includes("opex") || n.includes("operating");
+  });
+  const opexBalance = opexAccount ? (balancesByAccount(allocations).get(opexAccount.id) ?? 0) : 0;
+
+  const forecast = useMemo(() => {
+    const today = new Date();
+    const horizon = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
+    const forecastEvents = buildEvents(payments, invoices, today, horizon);
+    return forecastBalance(opexBalance, forecastEvents, 30);
+  }, [payments, invoices, opexBalance]);
+
+  const lowestPoint = forecast.reduce(
+    (min, p) => (p.balance < min.balance ? p : min),
+    forecast[0] ?? { label: "", date: "", balance: 0 },
+  );
+
+  const monthTotals = events.reduce(
+    (acc, e) => {
+      if (e.direction === "in") acc.in += e.amount;
+      else acc.out += e.amount;
+      return acc;
+    },
+    { in: 0, out: 0 },
+  );
+
+  const create = useMutation({
+    mutationFn: async () => {
+      const amount = Number(form.amount.replace(/\s|,/g, ""));
+      if (!form.name.trim()) throw new Error("Enter a name");
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter a positive amount");
+      const user_id = await currentUserId();
+      const { error } = await supabase.from("scheduled_payments").insert({
+        user_id,
+        name: form.name.trim(),
+        amount,
+        category: form.category,
+        direction: form.direction,
+        recurrence: form.recurrence,
+        day_of_month: Math.min(Math.max(Number(form.day_of_month) || 1, 1), 31),
+        start_date: form.start_date,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Scheduled payment added");
+      setOpen(false);
+      setForm({ ...form, name: "", amount: "" });
+      queryClient.invalidateQueries({ queryKey: ["scheduled_payments"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("scheduled_payments").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Removed");
+      queryClient.invalidateQueries({ queryKey: ["scheduled_payments"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const loading = paymentsQuery.isLoading || invoicesQuery.isLoading || accountsQuery.isLoading;
+  const todayKey = toKey(new Date());
+
+  return (
+    <AppShell
+      title="Cashflow Calendar"
+      description="Planned outflows, expected inflow and a 30-day cash gap forecast"
+    >
+      {loading ? (
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <SummaryCard label="Expected inflow (view)" value={formatMoney(monthTotals.in)} tone="success" />
+            <SummaryCard label="Planned outflow (view)" value={formatMoney(monthTotals.out)} tone="danger" />
+            <SummaryCard
+              label="Lowest OpEx balance (30d)"
+              value={formatMoney(lowestPoint.balance)}
+              tone={lowestPoint.balance < 0 ? "danger" : "default"}
+            />
+          </div>
+
+          {lowestPoint.balance < 0 ? (
+            <div className="flex items-start gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
+              <AlertTriangle className="mt-0.5 size-4 text-destructive" />
+              <div>
+                <p className="font-medium">Projected cash gap on {lowestPoint.label}</p>
+                <p className="text-muted-foreground">
+                  The Operating Expenses account is forecast to drop to {formatMoney(lowestPoint.balance)}.
+                  Move a payment date or top the account up.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="rounded-2xl border bg-card p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="size-4 text-muted-foreground" />
+                <h2 className="text-sm font-semibold">
+                  {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={view} onValueChange={(v) => setView(v as "month" | "week")}>
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="month">Month</SelectItem>
+                    <SelectItem value="week">Week</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Previous month"
+                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Next month"
+                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="size-4" />
+                      Scheduled payment
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>New scheduled payment</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor="sp-name">Name</Label>
+                        <Input
+                          id="sp-name"
+                          placeholder="Office rent"
+                          value={form.name}
+                          onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sp-amount">Amount</Label>
+                        <Input
+                          id="sp-amount"
+                          inputMode="decimal"
+                          placeholder="1200"
+                          value={form.amount}
+                          onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sp-day">Day of month</Label>
+                        <Input
+                          id="sp-day"
+                          inputMode="numeric"
+                          value={form.day_of_month}
+                          onChange={(e) => setForm({ ...form, day_of_month: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select
+                          value={form.category}
+                          onValueChange={(v) => setForm({ ...form, category: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PAYMENT_CATEGORIES.map((c) => (
+                              <SelectItem key={c.value} value={c.value}>
+                                {c.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Direction</Label>
+                        <Select
+                          value={form.direction}
+                          onValueChange={(v) => setForm({ ...form, direction: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="out">Outflow</SelectItem>
+                            <SelectItem value="in">Inflow</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Recurrence</Label>
+                        <Select
+                          value={form.recurrence}
+                          onValueChange={(v) => setForm({ ...form, recurrence: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {RECURRENCES.map((r) => (
+                              <SelectItem key={r.value} value={r.value}>
+                                {r.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sp-start">Start date</Label>
+                        <Input
+                          id="sp-start"
+                          type="date"
+                          value={form.start_date}
+                          onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                        {create.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                        Add payment
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border text-xs">
+              {WEEKDAYS.map((d) => (
+                <div key={d} className="bg-surface px-2 py-2 text-center font-medium text-muted-foreground">
+                  {d}
+                </div>
+              ))}
+              {cells.map((day) => {
+                const key = toKey(day);
+                const dayEvents = byDay.get(key) ?? [];
+                const outside = day.getMonth() !== month.getMonth();
+                return (
+                  <div
+                    key={key}
+                    className={cn(
+                      "min-h-24 bg-card p-2 align-top",
+                      outside && "bg-card/50 text-muted-foreground",
+                      key === todayKey && "ring-1 ring-primary ring-inset",
+                    )}
+                  >
+                    <span className="text-[11px] font-medium">{day.getDate()}</span>
+                    <div className="mt-1 space-y-1">
+                      {dayEvents.slice(0, 3).map((event) => (
+                        <div
+                          key={event.id}
+                          title={`${event.label} · ${formatMoney(event.amount)}`}
+                          className={cn(
+                            "truncate rounded px-1.5 py-0.5 text-[10px] font-medium",
+                            event.direction === "in"
+                              ? "bg-success/15 text-success"
+                              : "bg-destructive/15 text-destructive",
+                          )}
+                        >
+                          {event.direction === "in" ? "▲" : "▼"} {event.label}
+                        </div>
+                      ))}
+                      {dayEvents.length > 3 ? (
+                        <p className="text-[10px] text-muted-foreground">+{dayEvents.length - 3} more</p>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-6">
+            <h2 className="text-sm font-semibold">30-day cash gap forecast — Operating Expenses</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Starting balance {formatMoney(opexBalance)}
+              {opexAccount ? ` · ${opexAccount.name}` : " · no OpEx account found"}
+            </p>
+            <div className="mt-4 h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={forecast}>
+                  <CartesianGrid vertical={false} stroke="var(--border)" />
+                  <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} interval={4} />
+                  <YAxis tickLine={false} axisLine={false} fontSize={11} width={80} />
+                  <Tooltip formatter={(v: number) => formatMoney(v)} />
+                  <ReferenceLine y={0} stroke="var(--destructive)" strokeDasharray="4 4" />
+                  <Line
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="var(--acc-blue)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-card p-6">
+            <h2 className="text-sm font-semibold">Recurring items</h2>
+            {payments.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                No scheduled payments yet. Add rent, subscriptions, payroll and tax deadlines to see them
+                on the calendar.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-2">
+                {payments.map((payment) => (
+                  <div
+                    key={payment.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-3 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{payment.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {PAYMENT_CATEGORIES.find((c) => c.value === payment.category)?.label ??
+                          payment.category}{" "}
+                        ·{" "}
+                        {RECURRENCES.find((r) => r.value === payment.recurrence)?.label ??
+                          payment.recurrence}{" "}
+                        · day {payment.day_of_month}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "tabular font-semibold",
+                          payment.direction === "in" ? "text-success" : "text-destructive",
+                        )}
+                      >
+                        {payment.direction === "in" ? "+" : "−"}
+                        {formatMoney(payment.amount)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Delete"
+                        onClick={() => remove.mutate(payment.id)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </AppShell>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "default" | "success" | "danger";
+}) {
+  return (
+    <div className="rounded-2xl border bg-card p-5">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p
+        className={cn(
+          "tabular mt-2 text-2xl font-semibold tracking-tight",
+          tone === "success" && "text-success",
+          tone === "danger" && "text-destructive",
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
