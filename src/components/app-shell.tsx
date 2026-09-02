@@ -9,6 +9,7 @@ import {
   Menu,
   BarChart3,
   ArrowRightLeft,
+  CalendarDays,
   FileText,
   Target,
   Plug,
