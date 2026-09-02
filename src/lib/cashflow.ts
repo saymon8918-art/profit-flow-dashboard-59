@@ -38,7 +38,9 @@ export type CalendarEvent = {
   direction: "in" | "out";
   kind: "scheduled" | "invoice";
   category: string;
+  accountId?: string | null;
 };
+
 
 export function toKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
