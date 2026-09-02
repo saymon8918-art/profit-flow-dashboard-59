@@ -498,6 +498,128 @@ function CashflowPage() {
           </div>
 
           <div className="rounded-2xl border bg-card p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold">Projected account balances</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Inflow is split by allocation percentages; expenses reduce their linked account.
+                </p>
+              </div>
+              <Input
+                type="date"
+                aria-label="Projection date"
+                className="w-44"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+            </div>
+
+            {!selectedDay ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Pick a date from today onwards to see the projected balances.
+              </p>
+            ) : (
+              <>
+                {selectedDay.deficits.length > 0 ? (
+                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
+                    <AlertTriangle className="mt-0.5 size-4 text-destructive" />
+                    <div>
+                      <p className="font-medium">Potential cash gap on this date</p>
+                      <p className="text-muted-foreground">
+                        Not enough money projected on:{" "}
+                        {selectedDay.deficits
+                          .map((id) => accounts.find((a) => a.id === id)?.name ?? "account")
+                          .join(", ")}
+                        .
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {accounts
+                    .filter((a) => a.kind !== "income")
+                    .map((account) => {
+                      const value = selectedDay.balances[account.id] ?? 0;
+                      return (
+                        <div
+                          key={account.id}
+                          className={cn(
+                            "rounded-xl border bg-surface p-4",
+                            value < 0 && "border-destructive/50 bg-destructive/10",
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="size-2.5 rounded-full"
+                              style={{ background: `var(--${account.color})` }}
+                            />
+                            <p className="truncate text-xs text-muted-foreground">{account.name}</p>
+                          </div>
+                          <p
+                            className={cn(
+                              "tabular mt-2 text-lg font-semibold",
+                              value < 0 && "text-destructive",
+                            )}
+                          >
+                            {formatMoney(value)}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            now {formatMoney(currentBalances.get(account.id) ?? 0)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <div className="mt-5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase">
+                    Movements on this date
+                  </h3>
+                  {selectedEvents.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">No planned movements.</p>
+                  ) : (
+                    <div className="mt-2 space-y-2">
+                      {selectedEvents.map((event) => (
+                        <div
+                          key={event.id}
+                          className="flex items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-2 text-sm"
+                        >
+                          <span className="truncate">{event.label}</span>
+                          <span
+                            className={cn(
+                              "tabular font-semibold",
+                              event.direction === "in" ? "text-success" : "text-destructive",
+                            )}
+                          >
+                            {event.direction === "in" ? "+" : "−"}
+                            {formatMoney(event.amount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {firstGapDay ? (
+              <p className="mt-5 text-xs text-muted-foreground">
+                First projected shortfall:{" "}
+                <button
+                  type="button"
+                  className="font-medium text-destructive underline underline-offset-2"
+                  onClick={() => setSelectedDate(firstGapDay.date)}
+                >
+                  {firstGapDay.date}
+                </button>
+              </p>
+            ) : null}
+          </div>
+
+
+
+          <div className="rounded-2xl border bg-card p-6">
             <h2 className="text-sm font-semibold">30-day cash gap forecast — Operating Expenses</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               Starting balance {formatMoney(opexBalance)}
