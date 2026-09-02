@@ -21,6 +21,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   ACCOUNT_COLORS,
+  ADVANCED_ACCOUNT_PRESETS,
   fetchAccounts,
   totalPercentage,
   type Account,
