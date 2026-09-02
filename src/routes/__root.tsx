@@ -79,15 +79,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Profit First — дашборд бюджетирования бизнеса" },
+      { title: "Profit First — Business Budgeting Dashboard" },
       {
         name: "description",
-        content: "Распределение выручки по счетам по методике Profit First.",
+        content: "Allocate revenue across accounts using the Profit First method.",
       },
-      { property: "og:title", content: "Profit First — дашборд бюджетирования" },
+      { property: "og:title", content: "Profit First — Budgeting Dashboard" },
       {
         property: "og:description",
-        content: "Распределение выручки по счетам по методике Profit First.",
+        content: "Allocate revenue across accounts using the Profit First method.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

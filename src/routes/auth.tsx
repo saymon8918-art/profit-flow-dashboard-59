@@ -14,16 +14,16 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Вход в Profit First — бюджетирование бизнеса" },
+      { title: "Sign in to Profit First — Business Budgeting" },
       {
         name: "description",
         content:
-          "Войдите или создайте аккаунт, чтобы распределять выручку по методике Profit First и контролировать прибыль.",
+          "Sign in or create an account to allocate revenue with Profit First and stay on top of profit.",
       },
-      { property: "og:title", content: "Вход в Profit First" },
+      { property: "og:title", content: "Sign in to Profit First" },
       {
         property: "og:description",
-        content: "Доступ к дашборду распределения выручки по методике Profit First.",
+        content: "Access the Profit First revenue allocation dashboard.",
       },
     ],
   }),
@@ -31,8 +31,8 @@ export const Route = createFileRoute("/auth")({
 });
 
 const schema = z.object({
-  email: z.string().trim().email("Введите корректный e-mail").max(255),
-  password: z.string().min(6, "Пароль должен быть не короче 6 символов").max(72),
+  email: z.string().trim().email("Enter a valid email").max(255),
+  password: z.string().min(6, "Password must be at least 6 characters").max(72),
 });
 
 function AuthPage() {
@@ -44,7 +44,7 @@ function AuthPage() {
   async function submit(mode: "signin" | "signup") {
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Проверьте данные");
+      toast.error(parsed.error.issues[0]?.message ?? "Please check your input");
       return;
     }
     setLoading(true);
@@ -60,7 +60,7 @@ function AuthPage() {
         toast.error(error.message);
         return;
       }
-      toast.success(mode === "signin" ? "С возвращением!" : "Аккаунт создан");
+      toast.success(mode === "signin" ? "Welcome back!" : "Account created");
       navigate({ to: "/dashboard", replace: true });
     } finally {
       setLoading(false);
@@ -80,8 +80,8 @@ function AuthPage() {
         <div className="rounded-2xl border bg-card p-6 shadow-elevate">
           <Tabs defaultValue="signin">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Вход</TabsTrigger>
-              <TabsTrigger value="signup">Регистрация</TabsTrigger>
+              <TabsTrigger value="signin">Sign in</TabsTrigger>
+              <TabsTrigger value="signup">Sign up</TabsTrigger>
             </TabsList>
 
             <div className="mt-6 space-y-4">
@@ -97,12 +97,12 @@ function AuthPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Пароль</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   autoComplete="current-password"
-                  placeholder="Минимум 6 символов"
+                  placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -112,16 +112,16 @@ function AuthPage() {
             <TabsContent value="signin" className="mt-6">
               <Button className="w-full" disabled={loading} onClick={() => submit("signin")}>
                 {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-                Войти
+                Sign in
               </Button>
             </TabsContent>
             <TabsContent value="signup" className="mt-6">
               <Button className="w-full" disabled={loading} onClick={() => submit("signup")}>
                 {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-                Создать аккаунт
+                Create account
               </Button>
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                Регистрация мгновенная — подтверждение почты не требуется.
+                Signup is instant — no email confirmation required.
               </p>
             </TabsContent>
           </Tabs>

@@ -6,17 +6,17 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Profit First — дашборд бюджетирования бизнеса" },
+      { title: "Profit First — Business Budgeting Dashboard" },
       {
         name: "description",
         content:
-          "Распределяйте выручку по счетам прибыли, налогов и расходов по методике Profit First. Калькулятор распределения, балансы счетов и аналитика.",
+          "Allocate revenue to profit, tax and expense accounts with the Profit First method. Allocation calculator, account balances and analytics.",
       },
-      { property: "og:title", content: "Profit First — дашборд бюджетирования" },
+      { property: "og:title", content: "Profit First — Budgeting Dashboard" },
       {
         property: "og:description",
         content:
-          "Калькулятор распределения выручки, счета Profit First, история операций и графики.",
+          "Revenue allocation calculator, Profit First accounts, transaction history and charts.",
       },
     ],
   }),
@@ -26,23 +26,23 @@ export const Route = createFileRoute("/")({
 const FEATURES = [
   {
     icon: Percent,
-    title: "Счета и проценты",
-    text: "5 стандартных счетов Profit First плюс любые кастомные — с валидацией суммы процентов.",
+    title: "Accounts and percentages",
+    text: "Five default Profit First accounts plus any custom ones — with percentage validation.",
   },
   {
     icon: PiggyBank,
-    title: "Калькулятор распределения",
-    text: "Введите поступившую выручку и мгновенно получите суммы по каждому счёту.",
+    title: "Allocation calculator",
+    text: "Enter incoming revenue and instantly see the amount for each account.",
   },
   {
     icon: LineChart,
-    title: "Аналитика",
-    text: "Балансы, история распределений и диаграммы за месяц, квартал или год.",
+    title: "Analytics",
+    text: "Balances, allocation history and charts for a month, quarter or year.",
   },
   {
     icon: ShieldCheck,
-    title: "Приватность данных",
-    text: "Каждый пользователь видит только свои счета, настройки и транзакции.",
+    title: "Data privacy",
+    text: "Every user sees only their own accounts, settings and transactions.",
   },
 ];
 
@@ -57,25 +57,25 @@ function Landing() {
           <span className="text-sm font-semibold tracking-tight">Profit First</span>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link to="/auth">Войти</Link>
+          <Link to="/auth">Sign in</Link>
         </Button>
       </header>
 
       <section className="mx-auto max-w-3xl px-6 pt-16 pb-20 text-center sm:pt-24">
         <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-          Сначала плати себе
+          Pay yourself first
         </p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-          Бюджетирование бизнеса по методике Profit First
+          Business budgeting with the Profit First method
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground">
-          Разложите каждую поступившую сумму по счетам прибыли, вознаграждения, налогов и расходов —
-          автоматически, прозрачно и в одном дашборде.
+          Split every incoming payment across profit, owner's pay, tax and expense accounts —
+          automatically, transparently, in one dashboard.
         </p>
         <div className="mt-8 flex justify-center gap-3">
           <Button asChild size="lg">
             <Link to="/auth">
-              Начать бесплатно <ArrowRight className="size-4" />
+              Get started free <ArrowRight className="size-4" />
             </Link>
           </Button>
         </div>
