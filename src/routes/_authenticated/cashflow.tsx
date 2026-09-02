@@ -334,7 +334,9 @@ function CashflowPage() {
               <div className="flex items-center gap-2">
                 <CalendarDays className="size-4 text-muted-foreground" />
                 <h2 className="text-sm font-semibold">
-                  {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                  {view === "month"
+                    ? month.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+                    : `${weekAnchor.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
                 </h2>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -350,16 +352,28 @@ function CashflowPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label="Previous month"
-                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                  aria-label={view === "month" ? "Previous month" : "Previous week"}
+                  onClick={() =>
+                    view === "month"
+                      ? setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
+                      : setWeekAnchor(
+                          new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate() - 7),
+                        )
+                  }
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label="Next month"
-                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                  aria-label={view === "month" ? "Next month" : "Next week"}
+                  onClick={() =>
+                    view === "month"
+                      ? setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))
+                      : setWeekAnchor(
+                          new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate() + 7),
+                        )
+                  }
                 >
                   <ChevronRight className="size-4" />
                 </Button>
