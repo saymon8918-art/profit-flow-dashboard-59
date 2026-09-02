@@ -49,12 +49,14 @@ import {
   fetchScheduledPayments,
   forecastBalance,
   monthGrid,
+  projectAccountBalances,
   PAYMENT_CATEGORIES,
   RECURRENCES,
   toKey,
   type CalendarEvent,
 } from "@/lib/cashflow";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/cashflow")({
   head: () => ({
