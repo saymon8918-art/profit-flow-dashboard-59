@@ -317,6 +317,7 @@ function Dashboard() {
             </div>
           </div>
 
+          {pieData.length === 0 && barData.length === 0 ? null : (
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border bg-card p-6">
               <div className="flex items-center justify-between">
