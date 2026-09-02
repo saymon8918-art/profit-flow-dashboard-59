@@ -371,6 +371,9 @@ function Dashboard() {
               </div>
             </div>
           </div>
+          )}
+
+          <CashflowMiniCalendar />
         </div>
       )}
     </AppShell>
@@ -381,6 +384,84 @@ function EmptyChart() {
   return (
     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
       No data for the selected period
+    </div>
+  );
+}
+
+function CashflowMiniCalendar() {
+  const today = new Date();
+  const month = new Date(today.getFullYear(), today.getMonth(), 1);
+  const paymentsQuery = useQuery({ queryKey: ["scheduled_payments"], queryFn: fetchScheduledPayments });
+  const invoicesQuery = useQuery({ queryKey: ["invoices"], queryFn: fetchInvoices });
+
+  const cells = monthGrid(month);
+  const events = buildEvents(
+    paymentsQuery.data ?? [],
+    invoicesQuery.data ?? [],
+    cells[0]!,
+    cells[cells.length - 1]!,
+  );
+  const byDay = new Map<string, { in: number; out: number }>();
+  for (const event of events) {
+    const prev = byDay.get(event.date) ?? { in: 0, out: 0 };
+    if (event.direction === "in") prev.in += event.amount;
+    else prev.out += event.amount;
+    byDay.set(event.date, prev);
+  }
+  const todayKey = toKey(today);
+
+  return (
+    <div className="rounded-2xl border bg-card p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold">
+            Cashflow calendar — {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          </h2>
+        </div>
+        <Link to="/cashflow" className="text-sm font-medium text-primary hover:underline">
+          Open full calendar
+        </Link>
+      </div>
+      <div className="mt-4 grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border text-xs">
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+          <div key={d} className="bg-surface px-1 py-1.5 text-center text-[11px] text-muted-foreground">
+            {d}
+          </div>
+        ))}
+        {cells.map((day) => {
+          const key = toKey(day);
+          const totals = byDay.get(key);
+          const outside = day.getMonth() !== month.getMonth();
+          return (
+            <div
+              key={key}
+              title={
+                totals
+                  ? `In ${formatMoney(totals.in)} · Out ${formatMoney(totals.out)}`
+                  : undefined
+              }
+              className={`flex min-h-14 flex-col items-center gap-1 bg-card py-1.5 ${
+                outside ? "opacity-40" : ""
+              } ${key === todayKey ? "ring-1 ring-primary ring-inset" : ""}`}
+            >
+              <span className="text-[11px] font-medium">{day.getDate()}</span>
+              <div className="flex gap-1">
+                {totals?.in ? <span className="size-1.5 rounded-full bg-success" /> : null}
+                {totals?.out ? <span className="size-1.5 rounded-full bg-destructive" /> : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-success" /> Expected inflow
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-destructive" /> Planned outflow
+        </span>
+      </div>
     </div>
   );
 }
