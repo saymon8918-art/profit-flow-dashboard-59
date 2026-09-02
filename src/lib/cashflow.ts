@@ -88,7 +88,9 @@ export function buildEvents(
         direction,
         kind: "scheduled",
         category: payment.category,
+        accountId: payment.account_id,
       });
+
     };
 
     if (payment.recurrence === "once") {
