@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/history")({
       { title: "Allocation History — Profit First" },
       {
         name: "description",
-        content: "Таблица recorded allocations выручки с фильтрацией по датам.",
+        content: "Table of recorded revenue allocations with date filtering.",
       },
       { property: "og:title", content: "Allocation History — Profit First" },
       {
@@ -107,7 +107,7 @@ function HistoryPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground">
-            Пока нет recorded allocations.
+            No allocations recorded yet.
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border bg-card">

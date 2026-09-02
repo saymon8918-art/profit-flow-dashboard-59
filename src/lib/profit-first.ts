@@ -52,7 +52,7 @@ export const DEFAULT_ACCOUNTS = [
   },
   {
     name: "Profit",
-    description: "Pay yourself first: резерв прибыли компании.",
+    description: "Pay yourself first: the company profit reserve.",
     percentage: 5,
     kind: "allocation",
     color: "acc-emerald",
