@@ -519,9 +519,9 @@ function CashflowPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border text-xs">
+            <div className="mt-5 grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border text-sm">
               {WEEKDAYS.map((d) => (
-                <div key={d} className="bg-surface px-2 py-2 text-center font-medium text-muted-foreground">
+                <div key={d} className="bg-surface px-2 py-2.5 text-center text-sm font-semibold text-muted-foreground">
                   {d}
                 </div>
               ))}
@@ -555,7 +555,7 @@ function CashflowPage() {
                     )}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-medium">
+                      <span className="text-base font-semibold">
                         {view === "week"
                           ? day.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })
                           : day.getDate()}
