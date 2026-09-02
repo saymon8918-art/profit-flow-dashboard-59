@@ -90,6 +90,11 @@ function CashflowPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [view, setView] = useState<"month" | "week">("month");
+  const [weekAnchor, setWeekAnchor] = useState(() => {
+    const now = new Date();
+    const mondayOffset = (now.getDay() + 6) % 7;
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - mondayOffset);
+  });
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => toKey(new Date()));
   const [form, setForm] = useState({
@@ -118,14 +123,17 @@ function CashflowPage() {
   const paidKeys = useMemo(() => new Set(records.map((r) => r.event_key)), [records]);
 
   const cells = useMemo(() => {
-    const all = monthGrid(month);
-    if (view === "month") return all;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const index = all.findIndex((d) => toKey(d) === toKey(today));
-    const anchor = index >= 0 ? Math.floor(index / 7) : 0;
-    return all.slice(anchor * 7, anchor * 7 + 7);
-  }, [month, view]);
+    if (view === "month") return monthGrid(month);
+    return Array.from(
+      { length: 7 },
+      (_, i) => new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate() + i),
+    );
+  }, [month, view, weekAnchor]);
+
+  const weekEnd = useMemo(
+    () => new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate() + 6),
+    [weekAnchor],
+  );
 
   const events = useMemo(() => {
     if (cells.length === 0) return [];
@@ -326,7 +334,9 @@ function CashflowPage() {
               <div className="flex items-center gap-2">
                 <CalendarDays className="size-4 text-muted-foreground" />
                 <h2 className="text-sm font-semibold">
-                  {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                  {view === "month"
+                    ? month.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+                    : `${weekAnchor.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
                 </h2>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -342,16 +352,28 @@ function CashflowPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label="Previous month"
-                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                  aria-label={view === "month" ? "Previous month" : "Previous week"}
+                  onClick={() =>
+                    view === "month"
+                      ? setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
+                      : setWeekAnchor(
+                          new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate() - 7),
+                        )
+                  }
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label="Next month"
-                  onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                  aria-label={view === "month" ? "Next month" : "Next week"}
+                  onClick={() =>
+                    view === "month"
+                      ? setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))
+                      : setWeekAnchor(
+                          new Date(weekAnchor.getFullYear(), weekAnchor.getMonth(), weekAnchor.getDate() + 7),
+                        )
+                  }
                 >
                   <ChevronRight className="size-4" />
                 </Button>
@@ -506,7 +528,7 @@ function CashflowPage() {
               {cells.map((day) => {
                 const key = toKey(day);
                 const dayEvents = byDay.get(key) ?? [];
-                const outside = day.getMonth() !== month.getMonth();
+                const outside = view === "month" && day.getMonth() !== month.getMonth();
                 const projected = projectionByDate.get(key);
                 const gap = (projected?.deficits.length ?? 0) > 0;
                 return (
