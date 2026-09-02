@@ -7,8 +7,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Check,
   Plus,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -45,7 +47,9 @@ import {
   formatMoney,
 } from "@/lib/profit-first";
 import {
+  applyPaymentRecords,
   buildEvents,
+  fetchPaymentRecords,
   fetchScheduledPayments,
   forecastBalance,
   monthGrid,
@@ -104,11 +108,14 @@ function CashflowPage() {
   const invoicesQuery = useQuery({ queryKey: ["invoices"], queryFn: fetchInvoices });
   const accountsQuery = useQuery({ queryKey: ["accounts"], queryFn: fetchAccounts });
   const allocationsQuery = useQuery({ queryKey: ["allocations"], queryFn: fetchAllocations });
+  const recordsQuery = useQuery({ queryKey: ["payment_records"], queryFn: fetchPaymentRecords });
 
   const payments = paymentsQuery.data ?? [];
   const invoices = invoicesQuery.data ?? [];
   const accounts = accountsQuery.data ?? [];
   const allocations = allocationsQuery.data ?? [];
+  const records = recordsQuery.data ?? [];
+  const paidKeys = useMemo(() => new Set(records.map((r) => r.event_key)), [records]);
 
   const cells = useMemo(() => {
     const all = monthGrid(month);
@@ -137,15 +144,20 @@ function CashflowPage() {
     const n = a.name.toLowerCase();
     return n.includes("opex") || n.includes("operating");
   });
-  const currentBalances = useMemo(() => balancesByAccount(allocations), [allocations]);
+  const currentBalances = useMemo(
+    () => applyPaymentRecords(balancesByAccount(allocations), records, accounts),
+    [allocations, records, accounts],
+  );
   const opexBalance = opexAccount ? (currentBalances.get(opexAccount.id) ?? 0) : 0;
 
   const forecast = useMemo(() => {
     const today = new Date();
     const horizon = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
-    const forecastEvents = buildEvents(payments, invoices, today, horizon);
+    const forecastEvents = buildEvents(payments, invoices, today, horizon).filter(
+      (e) => !paidKeys.has(e.id),
+    );
     return forecastBalance(opexBalance, forecastEvents, 30);
-  }, [payments, invoices, opexBalance]);
+  }, [payments, invoices, opexBalance, paidKeys]);
 
   // Multi-account projection from today up to the end of the visible range (min. 30 days ahead).
   const projection = useMemo(() => {
@@ -154,9 +166,11 @@ function CashflowPage() {
     const gridEnd = cells[cells.length - 1] ?? today;
     const minEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 60);
     const end = gridEnd > minEnd ? gridEnd : minEnd;
-    const projEvents = buildEvents(payments, invoices, today, end);
+    const projEvents = buildEvents(payments, invoices, today, end).filter(
+      (e) => !paidKeys.has(e.id),
+    );
     return projectAccountBalances(accounts, currentBalances, projEvents, today, end);
-  }, [accounts, currentBalances, payments, invoices, cells]);
+  }, [accounts, currentBalances, payments, invoices, cells, paidKeys]);
 
   const projectionByDate = useMemo(
     () => new Map(projection.map((day) => [day.date, day])),
@@ -208,6 +222,51 @@ function CashflowPage() {
       setOpen(false);
       setForm({ ...form, name: "", amount: "" });
       queryClient.invalidateQueries({ queryKey: ["scheduled_payments"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const confirmPayment = useMutation({
+    mutationFn: async (event: CalendarEvent) => {
+      const user_id = await currentUserId();
+      const { error } = await supabase.from("payment_records").insert({
+        user_id,
+        event_key: event.id,
+        scheduled_payment_id: event.scheduledPaymentId ?? null,
+        invoice_id: event.invoiceId ?? null,
+        account_id: event.accountId ?? null,
+        name: event.label,
+        category: event.category,
+        direction: event.direction,
+        amount: event.amount,
+        occurred_on: event.date,
+      });
+      if (error) throw error;
+      if (event.invoiceId) {
+        await supabase.from("invoices").update({ status: "paid" }).eq("id", event.invoiceId);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Payment marked as completed");
+      queryClient.invalidateQueries({ queryKey: ["payment_records"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const undoPayment = useMutation({
+    mutationFn: async (eventKey: string) => {
+      const record = records.find((r) => r.event_key === eventKey);
+      const { error } = await supabase.from("payment_records").delete().eq("event_key", eventKey);
+      if (error) throw error;
+      if (record?.invoice_id) {
+        await supabase.from("invoices").update({ status: "sent" }).eq("id", record.invoice_id);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Marked as not paid");
+      queryClient.invalidateQueries({ queryKey: ["payment_records"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
