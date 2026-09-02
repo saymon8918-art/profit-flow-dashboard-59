@@ -24,6 +24,7 @@ export type Database = {
           name: string
           percentage: number
           sort_order: number
+          target_percentage: number
           updated_at: string
           user_id: string
         }
@@ -36,6 +37,7 @@ export type Database = {
           name: string
           percentage?: number
           sort_order?: number
+          target_percentage?: number
           updated_at?: string
           user_id: string
         }
@@ -48,6 +50,7 @@ export type Database = {
           name?: string
           percentage?: number
           sort_order?: number
+          target_percentage?: number
           updated_at?: string
           user_id?: string
         }
@@ -127,6 +130,155 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      integrations: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          last_synced_at: string | null
+          provider: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          last_synced_at?: string | null
+          provider: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          last_synced_at?: string | null
+          provider?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          client_name: string
+          created_at: string
+          due_at: string | null
+          id: string
+          issued_at: string
+          note: string | null
+          number: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          client_name: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          issued_at?: string
+          note?: string | null
+          number: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          client_name?: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          issued_at?: string
+          note?: string | null
+          number?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transfers: {
+        Row: {
+          account_id: string | null
+          account_name: string
+          amount: number
+          created_at: string
+          direction: string
+          id: string
+          note: string | null
+          status: string
+          transferred_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          account_name: string
+          amount: number
+          created_at?: string
+          direction?: string
+          id?: string
+          note?: string | null
+          status?: string
+          transferred_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          account_name?: string
+          amount?: number
+          created_at?: string
+          direction?: string
+          id?: string
+          note?: string | null
+          status?: string
+          transferred_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfers_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
