@@ -395,6 +395,36 @@ function CashflowPage() {
                           onChange={(e) => setForm({ ...form, start_date: e.target.value })}
                         />
                       </div>
+                      {form.direction === "out" ? (
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label>Charged to account</Label>
+                          <Select
+                            value={form.account_id || "auto"}
+                            onValueChange={(v) => setForm({ ...form, account_id: v === "auto" ? "" : v })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="auto">Auto (match by category)</SelectItem>
+                              {accounts
+                                .filter((a) => a.kind !== "income")
+                                .map((a) => (
+                                  <SelectItem key={a.id} value={a.id}>
+                                    {a.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            This expense reduces the projected balance of the selected account.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground sm:col-span-2">
+                          Inflow is split across your allocation accounts by their percentages.
+                        </p>
+                      )}
                     </div>
                     <DialogFooter>
                       <Button onClick={() => create.mutate()} disabled={create.isPending}>
@@ -417,16 +447,30 @@ function CashflowPage() {
                 const key = toKey(day);
                 const dayEvents = byDay.get(key) ?? [];
                 const outside = day.getMonth() !== month.getMonth();
+                const projected = projectionByDate.get(key);
+                const gap = (projected?.deficits.length ?? 0) > 0;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={key}
+                    onClick={() => setSelectedDate(key)}
                     className={cn(
-                      "min-h-24 bg-card p-2 align-top",
+                      "min-h-24 bg-card p-2 text-left align-top transition-colors hover:bg-surface",
                       outside && "bg-card/50 text-muted-foreground",
+                      gap && "bg-destructive/10",
                       key === todayKey && "ring-1 ring-primary ring-inset",
+                      key === selectedDate && "ring-2 ring-primary ring-inset",
                     )}
                   >
-                    <span className="text-[11px] font-medium">{day.getDate()}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-medium">{day.getDate()}</span>
+                      {gap ? (
+                        <AlertTriangle
+                          className="size-3 text-destructive"
+                          aria-label="Projected cash gap"
+                        />
+                      ) : null}
+                    </div>
                     <div className="mt-1 space-y-1">
                       {dayEvents.slice(0, 3).map((event) => (
                         <div
@@ -446,8 +490,9 @@ function CashflowPage() {
                         <p className="text-[10px] text-muted-foreground">+{dayEvents.length - 3} more</p>
                       ) : null}
                     </div>
-                  </div>
+                  </button>
                 );
+
               })}
             </div>
           </div>
