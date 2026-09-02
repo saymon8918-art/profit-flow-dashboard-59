@@ -64,21 +64,29 @@ export function AppShell({
   }
 
   const nav = (
-    <nav className="flex flex-col gap-1">
-      {NAV.map((item) => (
-        <Link
-          key={item.to}
-          to={item.to}
-          onClick={() => setOpen(false)}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          activeProps={{ className: "bg-accent text-foreground" }}
-        >
-          <item.icon className="size-4" />
-          {item.label}
-        </Link>
+    <nav className="flex flex-col gap-5">
+      {NAV_GROUPS.map((group) => (
+        <div key={group.label} className="flex flex-col gap-1">
+          <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-muted-foreground/70 uppercase">
+            {group.label}
+          </p>
+          {group.items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              activeProps={{ className: "bg-accent text-foreground" }}
+            >
+              <item.icon className="size-4" />
+              {item.label}
+            </Link>
+          ))}
+        </div>
       ))}
     </nav>
   );
+
 
   return (
     <div className="min-h-screen bg-background">
