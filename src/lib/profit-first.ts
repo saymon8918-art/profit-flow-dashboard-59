@@ -6,6 +6,7 @@ export type Account = {
   name: string;
   description: string | null;
   percentage: number;
+  target_percentage: number;
   kind: string;
   color: string;
   sort_order: number;
