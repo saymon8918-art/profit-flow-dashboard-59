@@ -33,7 +33,14 @@ import {
   totalPercentage,
   type Account,
 } from "@/lib/profit-first";
-import { buildEvents, fetchScheduledPayments, monthGrid, toKey } from "@/lib/cashflow";
+import {
+  applyPaymentRecords,
+  buildEvents,
+  fetchPaymentRecords,
+  fetchScheduledPayments,
+  monthGrid,
+  toKey,
+} from "@/lib/cashflow";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
