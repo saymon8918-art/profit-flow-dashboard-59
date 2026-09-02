@@ -87,6 +87,7 @@ function CashflowPage() {
   });
   const [view, setView] = useState<"month" | "week">("month");
   const [open, setOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(() => toKey(new Date()));
   const [form, setForm] = useState({
     name: "",
     amount: "",
@@ -95,7 +96,9 @@ function CashflowPage() {
     recurrence: "monthly",
     day_of_month: "1",
     start_date: toKey(new Date()),
+    account_id: "",
   });
+
 
   const paymentsQuery = useQuery({ queryKey: ["scheduled_payments"], queryFn: fetchScheduledPayments });
   const invoicesQuery = useQuery({ queryKey: ["invoices"], queryFn: fetchInvoices });
