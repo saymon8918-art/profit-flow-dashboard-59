@@ -90,7 +90,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r bg-sidebar p-4 lg:flex">
+      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col overflow-y-auto border-r bg-sidebar p-4 lg:flex">
         <Link to="/dashboard" className="mb-8 flex items-center gap-2 px-2">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <PiggyBank className="size-4" />
