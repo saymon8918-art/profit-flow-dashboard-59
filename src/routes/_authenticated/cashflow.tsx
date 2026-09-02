@@ -90,6 +90,11 @@ function CashflowPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [view, setView] = useState<"month" | "week">("month");
+  const [weekAnchor, setWeekAnchor] = useState(() => {
+    const now = new Date();
+    const mondayOffset = (now.getDay() + 6) % 7;
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - mondayOffset);
+  });
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => toKey(new Date()));
   const [form, setForm] = useState({
