@@ -123,7 +123,33 @@ function AccountsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const addPreset = useMutation({
+    mutationFn: async (name: string) => {
+      const preset = ADVANCED_ACCOUNT_PRESETS.find((p) => p.name === name);
+      if (!preset) throw new Error("Unknown preset");
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("No active session");
+      const { error } = await supabase.from("accounts").insert({
+        user_id: userId,
+        name: preset.name,
+        description: preset.description,
+        percentage: preset.percentage,
+        color: preset.color,
+        kind: "allocation",
+        sort_order: accounts.length,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Account added");
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const remove = useMutation({
+
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("accounts").delete().eq("id", id);
       if (error) throw error;
