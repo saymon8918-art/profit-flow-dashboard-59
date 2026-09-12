@@ -41,6 +41,27 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  async function sendReset() {
+    const parsedEmail = z.string().trim().email().safeParse(email);
+    if (!parsedEmail.success) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(parsedEmail.data, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Password reset link sent — check your email");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function submit(mode: "signin" | "signup") {
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) {
@@ -114,6 +135,14 @@ function AuthPage() {
                 {loading ? <Loader2 className="size-4 animate-spin" /> : null}
                 Sign in
               </Button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={sendReset}
+                className="mt-3 w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
+              >
+                Forgot your password?
+              </button>
             </TabsContent>
             <TabsContent value="signup" className="mt-6">
               <Button className="w-full" disabled={loading} onClick={() => submit("signup")}>
