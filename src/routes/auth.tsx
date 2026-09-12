@@ -135,6 +135,14 @@ function AuthPage() {
                 {loading ? <Loader2 className="size-4 animate-spin" /> : null}
                 Sign in
               </Button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={sendReset}
+                className="mt-3 w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
+              >
+                Forgot your password?
+              </button>
             </TabsContent>
             <TabsContent value="signup" className="mt-6">
               <Button className="w-full" disabled={loading} onClick={() => submit("signup")}>
