@@ -18,8 +18,10 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCashflowRouteImport } from './routes/_authenticated/cashflow'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
+import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedTargetsRouteImport } from './routes/_authenticated/targets'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedTransfersRouteImport } from './routes/_authenticated/transfers'
@@ -68,6 +70,11 @@ const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedIntegrationsRoute =
   AuthenticatedIntegrationsRouteImport.update({
     id: '/integrations',
@@ -77,6 +84,11 @@ const AuthenticatedIntegrationsRoute =
 const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
   id: '/invoices',
   path: '/invoices',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTargetsRoute = AuthenticatedTargetsRouteImport.update({
@@ -104,8 +116,10 @@ export interface FileRoutesByFullPath {
   '/cashflow': typeof AuthenticatedCashflowRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/import': typeof AuthenticatedImportRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
+  '/sales': typeof AuthenticatedSalesRoute
   '/targets': typeof AuthenticatedTargetsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/transfers': typeof AuthenticatedTransfersRoute
@@ -119,8 +133,10 @@ export interface FileRoutesByTo {
   '/cashflow': typeof AuthenticatedCashflowRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/import': typeof AuthenticatedImportRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
+  '/sales': typeof AuthenticatedSalesRoute
   '/targets': typeof AuthenticatedTargetsRoute
   '/team': typeof AuthenticatedTeamRoute
   '/transfers': typeof AuthenticatedTransfersRoute
@@ -136,8 +152,10 @@ export interface FileRoutesById {
   '/_authenticated/cashflow': typeof AuthenticatedCashflowRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
+  '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/targets': typeof AuthenticatedTargetsRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/transfers': typeof AuthenticatedTransfersRoute
@@ -153,8 +171,10 @@ export interface FileRouteTypes {
     | '/cashflow'
     | '/dashboard'
     | '/history'
+    | '/import'
     | '/integrations'
     | '/invoices'
+    | '/sales'
     | '/targets'
     | '/team'
     | '/transfers'
@@ -168,8 +188,10 @@ export interface FileRouteTypes {
     | '/cashflow'
     | '/dashboard'
     | '/history'
+    | '/import'
     | '/integrations'
     | '/invoices'
+    | '/sales'
     | '/targets'
     | '/team'
     | '/transfers'
@@ -184,8 +206,10 @@ export interface FileRouteTypes {
     | '/_authenticated/cashflow'
     | '/_authenticated/dashboard'
     | '/_authenticated/history'
+    | '/_authenticated/import'
     | '/_authenticated/integrations'
     | '/_authenticated/invoices'
+    | '/_authenticated/sales'
     | '/_authenticated/targets'
     | '/_authenticated/team'
     | '/_authenticated/transfers'
@@ -263,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/import': {
+      id: '/_authenticated/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof AuthenticatedImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/integrations': {
       id: '/_authenticated/integrations'
       path: '/integrations'
@@ -275,6 +306,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices'
       fullPath: '/invoices'
       preLoaderRoute: typeof AuthenticatedInvoicesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sales': {
+      id: '/_authenticated/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof AuthenticatedSalesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/targets': {
@@ -307,8 +345,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCashflowRoute: typeof AuthenticatedCashflowRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
+  AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
+  AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedTargetsRoute: typeof AuthenticatedTargetsRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedTransfersRoute: typeof AuthenticatedTransfersRoute
@@ -320,8 +360,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCashflowRoute: AuthenticatedCashflowRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
+  AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
+  AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedTargetsRoute: AuthenticatedTargetsRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedTransfersRoute: AuthenticatedTransfersRoute,

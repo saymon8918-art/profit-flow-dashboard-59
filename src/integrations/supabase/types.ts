@@ -131,6 +131,51 @@ export type Database = {
         }
         Relationships: []
       }
+      import_batches: {
+        Row: {
+          created_at: string
+          duplicate_rows: number
+          error_message: string | null
+          file_name: string
+          id: string
+          inserted_rows: number
+          sheet_name: string | null
+          skipped_rows: number
+          status: string
+          total_rows: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duplicate_rows?: number
+          error_message?: string | null
+          file_name: string
+          id?: string
+          inserted_rows?: number
+          sheet_name?: string | null
+          skipped_rows?: number
+          status?: string
+          total_rows?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          duplicate_rows?: number
+          error_message?: string | null
+          file_name?: string
+          id?: string
+          inserted_rows?: number
+          sheet_name?: string | null
+          skipped_rows?: number
+          status?: string
+          total_rows?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           created_at: string
@@ -272,6 +317,77 @@ export type Database = {
             columns: ["scheduled_payment_id"]
             isOneToOne: false
             referencedRelation: "scheduled_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_transactions: {
+        Row: {
+          created_at: string
+          extra: Json
+          id: string
+          import_batch_id: string | null
+          product_category: string | null
+          product_detail: string | null
+          product_id: string | null
+          product_type: string | null
+          row_hash: string
+          store_id: string | null
+          store_location: string | null
+          transaction_date: string | null
+          transaction_id: string | null
+          transaction_qty: number | null
+          transaction_time: string | null
+          unit_price: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          extra?: Json
+          id?: string
+          import_batch_id?: string | null
+          product_category?: string | null
+          product_detail?: string | null
+          product_id?: string | null
+          product_type?: string | null
+          row_hash: string
+          store_id?: string | null
+          store_location?: string | null
+          transaction_date?: string | null
+          transaction_id?: string | null
+          transaction_qty?: number | null
+          transaction_time?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          extra?: Json
+          id?: string
+          import_batch_id?: string | null
+          product_category?: string | null
+          product_detail?: string | null
+          product_id?: string | null
+          product_type?: string | null
+          row_hash?: string
+          store_id?: string | null
+          store_location?: string | null
+          transaction_date?: string | null
+          transaction_id?: string | null
+          transaction_qty?: number | null
+          transaction_time?: string | null
+          unit_price?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_transactions_import_batch_id_fkey"
+            columns: ["import_batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
             referencedColumns: ["id"]
           },
         ]

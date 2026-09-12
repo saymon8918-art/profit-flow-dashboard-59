@@ -14,6 +14,8 @@ import {
   Target,
   Plug,
   Users,
+  FileSpreadsheet,
+  Database,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -31,6 +33,13 @@ const NAV_GROUPS = [
       { to: "/invoices", label: "Invoices & Inflow", icon: FileText },
       { to: "/cashflow", label: "Cashflow Calendar", icon: CalendarDays },
       { to: "/history", label: "History", icon: History },
+    ],
+  },
+  {
+    label: "Data",
+    items: [
+      { to: "/import", label: "Import Excel", icon: FileSpreadsheet },
+      { to: "/sales", label: "Sales Records", icon: Database },
     ],
   },
   {
