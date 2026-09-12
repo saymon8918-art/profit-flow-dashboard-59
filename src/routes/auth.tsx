@@ -41,6 +41,27 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  async function sendReset() {
+    const parsedEmail = z.string().trim().email().safeParse(email);
+    if (!parsedEmail.success) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(parsedEmail.data, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Password reset link sent — check your email");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function submit(mode: "signin" | "signup") {
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) {
