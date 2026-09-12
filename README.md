@@ -1,14 +1,86 @@
-# Welcome to your Lovable project
+# ProfitFlow Dashboard
+
+Разработай современный, профессиональный веб-дашборд для бюджетирования бизнеса по методике "Profit First" (Сначала плати себе). 
+
+### 1. Архитектура и Дизайн (UI/UX)
+
+- **Стиль:** Минималистичный, современный, премиальный B2B-интерфейс (в духе Stripe Dashboard или Linear).
+
+- **Цветовая гамма:** Нейтральный фон (светлая/темная тема или чистый светлый фон), сдержанные акцентные цвета для финансовых показателей (зеленый для прибыли, синий для налогов и т.д.).
+
+- **Библиотека компонентов:** Используй shadcn/ui, Tailwind CSS и Lucide icons.
+
+- **Адаптивность:** Полная адаптивность под десктоп и мобильные устройства.
+
+### 2. Авторизация и Пользователи (Supabase Auth)
+
+- Вход по Логину (Email) и Паролю.
+
+- **Регистрация:** Мгновенная регистрация нового пользователя БЕЗ необходимости подтверждения по электронной почте (отключи e-mail confirmation).
+
+- После входа пользователь попадает на главный дашборд.
+
+### 3. Основной функционал бюджетирования (Profit First)
+
+#### А. Управление Счетами (Accounts Management)
+
+- Возможность создавать, редактировать и удалять целевые банковские счета.
+
+- По умолчанию при создании аккаунта создаются 5 стандартных счетов Profit First:
+
+  1. Выручка / Доходы (Income) — 100% (базовый счет)
+
+  2. Прибыль (Profit) — по умолчанию 5%
+
+  3. Вознаграждение владельца (Owner's Comp) — по умолчанию 50%
+
+  4. Налоги (Taxes) — по умолчанию 15%
+
+  5. Операционные расходы (OpEx) — по умолчанию 30%
+
+- **Кастомные счета:** Пользователь должен иметь возможность добавить ЛЮБОЙ дополнительный счет (например, "Дрип-счет", "Закупки", "Бонусы") и задать ему:
+
+  - Название счета
+
+  - Назначенный процент распределения (%)
+
+  - Описание/цель счета
+
+- Общая сумма всех процентов распределения должна динамически валидироваться (выводи предупреждение, если сумма % не равна 100%).
+
+#### Б. Калькулятор Распределения (Allocation Calculator)
+
+- Главный инструмент на дашборде: поле ввода "Поступившая выручка" (например, $10,000).
+
+- Кнопка "Рассчитать и распределить".
+
+- Автоматический расчет сумм в валюте для каждого счета на основе установленных процентов.
+
+- Кнопка "Зафиксировать распределение" (сохраняет транзакцию распределения в историю).
+
+#### В. Дашборд и Аналитика
+
+- **Карточки счетов:** Отображение текущего баланса по каждому счету с визуальным индикатором его доли.
+
+- **История транзакций:** Таблица проведенных распределений и поступлений с возможностью фильтрации по датам.
+
+- **Графики:** Наглядные диаграммы (Recharts) распределения средств за выбранный период (месяц/квартал/год).
+
+### 4. Данные и Безопасность
+
+- Использовать Supabase в качестве бэкенда.
+
+- Включить Row Level Security (RLS), чтобы каждый пользователь видел ТОЛЬКО свои счета, настройки и транзакции.
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/57f5c96c-37a4-4fb2-8b52-28a048ed9a6b).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +92,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
