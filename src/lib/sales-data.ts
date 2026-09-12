@@ -386,7 +386,8 @@ export async function importParsedRows(
     while (next < chunks.length && !failure) {
       const chunk = chunks[next++]!;
       try {
-        inserted += await insertChunk(chunk, userId!, batch!.id);
+        const added = await insertChunk(chunk, userId!, batch!.id);
+        inserted += added;
         processed += chunk.length;
         onProgress({ processed, total: parsed.rows.length, inserted });
       } catch (e) {
