@@ -41,9 +41,8 @@ import {
 } from "@/lib/sales-data";
 
 export const Route = createFileRoute("/_authenticated/sales")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    batch: typeof search["batch"] === "string" ? search["batch"] : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { batch?: string } =>
+    typeof search["batch"] === "string" ? { batch: search["batch"] } : {},
   head: () => ({
     meta: [
       { title: "Sales Records — Profit First" },
