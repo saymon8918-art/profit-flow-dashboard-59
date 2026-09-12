@@ -25,6 +25,13 @@ import { cn } from "@/lib/utils";
 
 const NAV_GROUPS = [
   {
+    label: "Data",
+    items: [
+      { to: "/import", label: "Import Excel", icon: FileSpreadsheet },
+      { to: "/sales", label: "Sales Records", icon: Database },
+    ],
+  },
+  {
     label: "Money management",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -33,13 +40,6 @@ const NAV_GROUPS = [
       { to: "/invoices", label: "Invoices & Inflow", icon: FileText },
       { to: "/cashflow", label: "Cashflow Calendar", icon: CalendarDays },
       { to: "/history", label: "History", icon: History },
-    ],
-  },
-  {
-    label: "Data",
-    items: [
-      { to: "/import", label: "Import Excel", icon: FileSpreadsheet },
-      { to: "/sales", label: "Sales Records", icon: Database },
     ],
   },
   {
