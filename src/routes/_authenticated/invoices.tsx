@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDate, useDateFormat, type DateFormat } from "@/lib/date-format";
 import {
   currentUserId,
   fetchInvoices,
@@ -68,6 +69,7 @@ function InvoicesPage() {
   const [status, setStatus] = useState("draft");
   const [issuedAt, setIssuedAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [dueAt, setDueAt] = useState("");
+  const [dateFormat, setDateFormat] = useDateFormat();
 
   const invoicesQuery = useQuery({ queryKey: ["invoices"], queryFn: fetchInvoices });
   const invoices = invoicesQuery.data ?? [];
