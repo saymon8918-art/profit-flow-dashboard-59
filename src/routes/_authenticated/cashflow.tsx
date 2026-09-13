@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDate, useDateFormat, type DateFormat } from "@/lib/date-format";
 import {
   balancesByAccount,
   currentUserId,
@@ -97,6 +98,7 @@ function CashflowPage() {
   });
   const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => toKey(new Date()));
+  const [dateFormat, setDateFormat] = useDateFormat();
   const [form, setForm] = useState({
     name: "",
     amount: "",
@@ -347,6 +349,15 @@ function CashflowPage() {
                   <SelectContent>
                     <SelectItem value="month">Month</SelectItem>
                     <SelectItem value="week">Week</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={dateFormat} onValueChange={(v) => setDateFormat(v as DateFormat)}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="us">US — MM/DD/YYYY</SelectItem>
+                    <SelectItem value="cis">CIS — DD.MM.YYYY</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
