@@ -252,15 +252,15 @@ function SalesPage() {
         )}
 
         {total > PAGE_SIZE ? (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Page {page + 1} of {pageCount.toLocaleString("en-US")}
-            </span>
-            <div className="flex gap-2">
+          <div className="flex flex-col items-center gap-2 pt-2 text-sm">
+            <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
                 <ChevronLeft className="size-4" />
                 Previous
               </Button>
+              <span className="text-muted-foreground px-2">
+                Page {page + 1} of {pageCount.toLocaleString("en-US")}
+              </span>
               <Button
                 variant="outline"
                 size="sm"
