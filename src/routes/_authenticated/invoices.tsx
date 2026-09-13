@@ -132,6 +132,18 @@ function InvoicesPage() {
   return (
     <AppShell title="Invoices & Inflow" description="Bill clients and track expected revenue">
       <div className="space-y-6">
+        <div className="flex items-center justify-end gap-2">
+          <Label className="text-xs text-muted-foreground">Date format</Label>
+          <Select value={dateFormat} onValueChange={(v) => setDateFormat(v as DateFormat)}>
+            <SelectTrigger className="h-8 w-40 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="us">US — MM/DD/YYYY</SelectItem>
+              <SelectItem value="cis">CIS — DD.MM.YYYY</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border bg-card p-5">
             <p className="text-xs text-muted-foreground">Expected inflow</p>
@@ -254,10 +266,10 @@ function InvoicesPage() {
                       {formatMoney(invoice.amount)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {new Date(invoice.issued_at).toLocaleDateString("en-US")}
+                      {formatDate(invoice.issued_at, dateFormat)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {invoice.due_at ? new Date(invoice.due_at).toLocaleDateString("en-US") : "—"}
+                      {formatDate(invoice.due_at, dateFormat)}
                     </TableCell>
                     <TableCell>
                       <Select
