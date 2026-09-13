@@ -25,6 +25,7 @@ import {
 } from "recharts";
 
 import { AppShell } from "@/components/app-shell";
+import { DatePicker } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -481,11 +482,10 @@ function CashflowPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="sp-start">Start date</Label>
-                        <Input
+                        <DatePicker
                           id="sp-start"
-                          type="date"
                           value={form.start_date}
-                          onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                          onChange={(v) => setForm({ ...form, start_date: v })}
                         />
                       </div>
                       {form.direction === "out" ? (
@@ -649,13 +649,9 @@ function CashflowPage() {
                 <span className="text-xs text-muted-foreground tabular">
                   {formatDate(selectedDate, dateFormat)}
                 </span>
-                <Input
-                  type="date"
-                  aria-label="Projection date"
-                  className="w-44"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                />
+                <div className="w-44">
+                  <DatePicker value={selectedDate} onChange={setSelectedDate} />
+                </div>
               </div>
             </div>
 

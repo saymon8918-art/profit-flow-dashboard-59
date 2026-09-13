@@ -5,6 +5,7 @@ import { ArrowRightLeft, CalendarClock, Loader2, Plus, Trash2 } from "lucide-rea
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
+import { DatePicker } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -182,12 +183,7 @@ function TransfersPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
+              <DatePicker id="date" value={date} onChange={setDate} />
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
