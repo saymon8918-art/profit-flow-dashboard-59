@@ -19,6 +19,13 @@ import { TrendingUp, CalendarDays, Clock, ShoppingBag, DollarSign } from "lucide
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sales-analytics")({
@@ -41,6 +48,7 @@ type Row = {
   transaction_qty: number | null;
   unit_price: number | null;
   store_location: string | null;
+  product_category: string | null;
   product_type: string | null;
   product_detail: string | null;
 };
@@ -52,7 +60,7 @@ async function fetchAllSales(onProgress: (loaded: number) => void): Promise<Row[
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await supabase
       .from("sales_transactions")
-      .select("transaction_date, transaction_time, transaction_qty, unit_price, store_location, product_type, product_detail")
+      .select("transaction_date, transaction_time, transaction_qty, unit_price, store_location, product_category, product_type, product_detail")
       .order("created_at", { ascending: true })
       .range(from, from + PAGE - 1);
     if (error) throw error;
