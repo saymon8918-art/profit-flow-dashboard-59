@@ -212,7 +212,7 @@ function SalesAnalyticsPage() {
       topByRevenue: byRevenue.slice(0, 10),
       totals: { revenue: totalRevenue, qty: totalQty, rows: data.length, days: byDay.size, products: productList.length },
     };
-  }, [data]);
+  }, [filtered]);
 
   const LOC_COLORS = ["#2563eb", "#16a34a", "#dc2626", "#d97706", "#7c3aed", "#0891b2", "#db2777"];
 
@@ -240,6 +240,41 @@ function SalesAnalyticsPage() {
         </Card>
       ) : (
         <div className="flex flex-col gap-6">
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={location} onValueChange={setLocation}>
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="All locations" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All locations</SelectItem>
+                {filterOptions.locations.map((l) => (
+                  <SelectItem key={l} value={l}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="All categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {filterOptions.categories.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(location !== "all" || category !== "all") && (
+              <button
+                type="button"
+                className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                onClick={() => { setLocation("all"); setCategory("all"); }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
           {/* Summary */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <Card><CardHeader className="pb-1"><CardDescription>Total revenue</CardDescription><CardTitle className="text-2xl">{money(agg.totals.revenue)}</CardTitle></CardHeader></Card>
