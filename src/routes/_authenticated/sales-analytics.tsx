@@ -93,14 +93,39 @@ const fmtDate = (iso: string) => {
 
 function SalesAnalyticsPage() {
   const [loaded, setLoaded] = useState(0);
+  const [location, setLocation] = useState("all");
+  const [category, setCategory] = useState("all");
   const { data, isLoading, error } = useQuery({
     queryKey: ["sales-analytics"],
     queryFn: () => fetchAllSales(setLoaded),
     staleTime: 5 * 60_000,
   });
 
-  const agg = useMemo(() => {
+  const filterOptions = useMemo(() => {
+    const locations = new Set<string>();
+    const categories = new Set<string>();
+    for (const r of data ?? []) {
+      if (r.store_location) locations.add(r.store_location);
+      if (r.product_category) categories.add(r.product_category);
+    }
+    return {
+      locations: [...locations].sort(),
+      categories: [...categories].sort(),
+    };
+  }, [data]);
+
+  const filtered = useMemo(() => {
     if (!data) return null;
+    return data.filter(
+      (r) =>
+        (location === "all" || (r.store_location ?? "") === location) &&
+        (category === "all" || (r.product_category ?? "") === category),
+    );
+  }, [data, location, category]);
+
+  const agg = useMemo(() => {
+    if (!filtered) return null;
+    const data = filtered;
 
     const byDay = new Map<string, { date: string; revenue: number; qty: number; count: number }>();
     const weekdays = WEEKDAYS.map((name, i) => ({ i, name, count: 0, revenue: 0, days: new Set<string>() }));
