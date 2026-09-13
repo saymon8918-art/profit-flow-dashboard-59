@@ -5,6 +5,7 @@ import { ArrowRightLeft, CalendarClock, Loader2, Plus, Trash2 } from "lucide-rea
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
+import { DatePicker } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
