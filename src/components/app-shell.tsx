@@ -30,6 +30,7 @@ const NAV_GROUPS = [
       { to: "/import", label: "Import Excel", icon: FileSpreadsheet },
       { to: "/sales", label: "Sales Records", icon: Database },
       { to: "/sales-analytics", label: "Sales Analytics", icon: BarChart3 },
+      { to: "/assistant", label: "AI Assistant", icon: Bot },
     ],
   },
   {
