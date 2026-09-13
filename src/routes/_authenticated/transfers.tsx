@@ -182,12 +182,7 @@ function TransfersPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
+              <DatePicker id="date" value={date} onChange={setDate} />
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
