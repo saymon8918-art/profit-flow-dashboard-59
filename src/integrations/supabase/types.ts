@@ -533,7 +533,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      sales_agg: {
+        Args: {
+          p_category?: string
+          p_dims?: string[]
+          p_end?: string
+          p_limit?: number
+          p_location?: string
+          p_order?: string
+          p_product?: string
+          p_start?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
