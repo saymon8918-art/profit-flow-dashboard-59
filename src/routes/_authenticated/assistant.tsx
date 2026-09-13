@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Bot, Send, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -144,7 +145,7 @@ function AssistantPage() {
               >
                 {message.role === "assistant" ? (
                   <div className="prose prose-sm dark:prose-invert max-w-none [&_table]:text-xs">
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                   </div>
                 ) : (
                   <p className="whitespace-pre-wrap">{message.content}</p>
