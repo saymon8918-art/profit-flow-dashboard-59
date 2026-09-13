@@ -5,6 +5,7 @@ import { FileText, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
+import { DatePicker } from "@/components/date-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -212,21 +213,11 @@ function InvoicesPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="issued">Issued</Label>
-              <Input
-                id="issued"
-                type="date"
-                value={issuedAt}
-                onChange={(e) => setIssuedAt(e.target.value)}
-              />
+              <DatePicker id="issued" value={issuedAt} onChange={setIssuedAt} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="due">Due</Label>
-              <Input
-                id="due"
-                type="date"
-                value={dueAt}
-                onChange={(e) => setDueAt(e.target.value)}
-              />
+              <DatePicker id="due" value={dueAt} onChange={setDueAt} />
             </div>
           </div>
           <Button className="mt-4" onClick={() => create.mutate()} disabled={create.isPending}>
