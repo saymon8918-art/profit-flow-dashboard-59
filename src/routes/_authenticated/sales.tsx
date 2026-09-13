@@ -207,7 +207,6 @@ function SalesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16 text-right">#</TableHead>
                   {SALES_COLUMNS.map((c) => (
                     <TableHead key={c.key} className="whitespace-nowrap">
                       {c.label}
@@ -219,15 +218,14 @@ function SalesPage() {
               <TableBody>
                 {rows.map((row, idx) => (
                   <TableRow key={row.id}>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {(page * PAGE_SIZE + idx + 1).toLocaleString("en-US")}
-                    </TableCell>
                     {SALES_COLUMNS.map((c) => (
                       <TableCell
                         key={c.key}
                         className={c.type === "number" ? "tabular-nums whitespace-nowrap" : "max-w-56 truncate"}
                       >
-                        {formatCell(row[c.key], c.type)}
+                        {c.key === "transaction_id"
+                          ? (page * PAGE_SIZE + idx + 1).toLocaleString("en-US")
+                          : formatCell(row[c.key], c.type)}
                       </TableCell>
                     ))}
                     <TableCell>
