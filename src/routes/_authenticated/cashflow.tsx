@@ -645,13 +645,18 @@ function CashflowPage() {
                   Inflow is split by allocation percentages; expenses reduce their linked account.
                 </p>
               </div>
-              <Input
-                type="date"
-                aria-label="Projection date"
-                className="w-44"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground tabular">
+                  {formatDate(selectedDate, dateFormat)}
+                </span>
+                <Input
+                  type="date"
+                  aria-label="Projection date"
+                  className="w-44"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+              </div>
             </div>
 
             {!selectedDay ? (
