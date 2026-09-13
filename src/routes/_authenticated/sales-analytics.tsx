@@ -19,6 +19,13 @@ import { TrendingUp, CalendarDays, Clock, ShoppingBag, DollarSign } from "lucide
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/sales-analytics")({
@@ -41,6 +48,7 @@ type Row = {
   transaction_qty: number | null;
   unit_price: number | null;
   store_location: string | null;
+  product_category: string | null;
   product_type: string | null;
   product_detail: string | null;
 };
@@ -52,7 +60,7 @@ async function fetchAllSales(onProgress: (loaded: number) => void): Promise<Row[
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await supabase
       .from("sales_transactions")
-      .select("transaction_date, transaction_time, transaction_qty, unit_price, store_location, product_type, product_detail")
+      .select("transaction_date, transaction_time, transaction_qty, unit_price, store_location, product_category, product_type, product_detail")
       .order("created_at", { ascending: true })
       .range(from, from + PAGE - 1);
     if (error) throw error;
@@ -85,14 +93,39 @@ const fmtDate = (iso: string) => {
 
 function SalesAnalyticsPage() {
   const [loaded, setLoaded] = useState(0);
+  const [location, setLocation] = useState("all");
+  const [category, setCategory] = useState("all");
   const { data, isLoading, error } = useQuery({
     queryKey: ["sales-analytics"],
     queryFn: () => fetchAllSales(setLoaded),
     staleTime: 5 * 60_000,
   });
 
-  const agg = useMemo(() => {
+  const filterOptions = useMemo(() => {
+    const locations = new Set<string>();
+    const categories = new Set<string>();
+    for (const r of data ?? []) {
+      if (r.store_location) locations.add(r.store_location);
+      if (r.product_category) categories.add(r.product_category);
+    }
+    return {
+      locations: [...locations].sort(),
+      categories: [...categories].sort(),
+    };
+  }, [data]);
+
+  const filtered = useMemo(() => {
     if (!data) return null;
+    return data.filter(
+      (r) =>
+        (location === "all" || (r.store_location ?? "") === location) &&
+        (category === "all" || (r.product_category ?? "") === category),
+    );
+  }, [data, location, category]);
+
+  const agg = useMemo(() => {
+    if (!filtered) return null;
+    const data = filtered;
 
     const byDay = new Map<string, { date: string; revenue: number; qty: number; count: number }>();
     const weekdays = WEEKDAYS.map((name, i) => ({ i, name, count: 0, revenue: 0, days: new Set<string>() }));
@@ -179,7 +212,7 @@ function SalesAnalyticsPage() {
       topByRevenue: byRevenue.slice(0, 10),
       totals: { revenue: totalRevenue, qty: totalQty, rows: data.length, days: byDay.size, products: productList.length },
     };
-  }, [data]);
+  }, [filtered]);
 
   const LOC_COLORS = ["#2563eb", "#16a34a", "#dc2626", "#d97706", "#7c3aed", "#0891b2", "#db2777"];
 
@@ -207,6 +240,41 @@ function SalesAnalyticsPage() {
         </Card>
       ) : (
         <div className="flex flex-col gap-6">
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={location} onValueChange={setLocation}>
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="All locations" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All locations</SelectItem>
+                {filterOptions.locations.map((l) => (
+                  <SelectItem key={l} value={l}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="All categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {filterOptions.categories.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(location !== "all" || category !== "all") && (
+              <button
+                type="button"
+                className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                onClick={() => { setLocation("all"); setCategory("all"); }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
           {/* Summary */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <Card><CardHeader className="pb-1"><CardDescription>Total revenue</CardDescription><CardTitle className="text-2xl">{money(agg.totals.revenue)}</CardTitle></CardHeader></Card>
